@@ -1,5 +1,6 @@
 #include "traffic_sign_detector.h"
 
+
 using namespace cv;
 using namespace std;
 using namespace cv::ml;
@@ -7,7 +8,6 @@ using namespace cv::ml;
 TrafficSignDetector::TrafficSignDetector() {
 
     color_file = ros::package::getPath("ict60_racecar") + std::string("/data/blue.color");
-    // svm_file = ros::package::getPath("ict60_racecar") + std::string("/data/svm.yml");
     svm_file = ros::package::getPath("ict60_racecar") + std::string("/data/svm_an_linear.xml");
 
 
@@ -16,257 +16,327 @@ TrafficSignDetector::TrafficSignDetector() {
 
     // Init HOG Descriptor config
     hog = cv::HOGDescriptor(
-        cv::Size(32,32), //winSize
-        cv::Size(8,8), //blocksize
-        cv::Size(4,4), //blockStride,
-        cv::Size(8,8), //cellSize, 
-        9, //nbins,
-        1, //derivAper,
-        -1, //winSigma,
-        0, //histogramNormType,
-        0.2, //L2HysThresh,
-        0,//gammal correction,
-        64,//nlevels=64
+        Size(size,size),    //winSize
+        Size(8, 8),          //blocksize
+        Size(4, 4),          //blockStride,
+        Size(8, 8),          //cellSize,
+        9,                  //nbins,
+        1,                  //derivAper,
+        -1,                 //winSigma,
+        0,                  //histogramNormType,
+        0.2,                //L2HysThresh,
+        1,                  //gamma correction,
+        64,                 //nlevels=64
         1
-    );
+    );                 //_signedGradient = true 
 
     readColorFile();
 
     cout << "Done loading color file." << endl;
 
-    svm = svm->load(svm_file);
+    model = Algorithm::load<SVM>(svm_file);
     cout << "Done loading detectors." << endl;
-    getSVMParams(svm);
-    std::cout << "var_count = " << svm->getVarCount() << endl;
+    getSVMParams(model);
+    std::cout << "var_count = " << model->getVarCount() << endl;
 
 }
 
+// =====================================================
+// ******* HELPER ********
+// ======================================================
 
-/*!
- * \brief Enlarge an ROI rectangle by a specific amount if possible 
- * \param frm The image the ROI will be set on
- * \param boundingBox The current boundingBox
- * \param padding The amount of padding around the boundingbox
- * \return The enlarged ROI as far as possible
- */
-cv::Rect TrafficSignDetector::enlargeROI(cv::Mat frm, cv::Rect boundingBox, int padding) {
-    cv::Rect returnRect = cv::Rect(boundingBox.x - padding, boundingBox.y - padding, boundingBox.width + (padding * 2), boundingBox.height + (padding * 2));
-    if (returnRect.x < 0) returnRect.x = 0;
-    if (returnRect.y < 0) returnRect.y = 0;
-    if (returnRect.x+returnRect.width >= frm.cols)
-        returnRect.width = frm.cols-returnRect.x;
-    if (returnRect.y+returnRect.height >= frm.rows)
-        returnRect.height = frm.rows-returnRect.y;
-    return returnRect;
-}
-
-void TrafficSignDetector::mergeOverlappingBoxes(std::vector<cv::Rect> &inputBoxes, cv::Mat &image, std::vector<cv::Rect> &outputBoxes)
-{
-    cv::Mat mask = cv::Mat::zeros(image.size(), CV_8UC1); // Mask of original image
-    cv::Size scaleFactor(2,2); // To expand rectangles, i.e. increase sensitivity to nearby rectangles. Doesn't have to be (10,10)--can be anything
-    for (int i = 0; i < inputBoxes.size(); i++)
-    {
-        cv::Rect box = inputBoxes.at(i) + scaleFactor;
-        cv::rectangle(mask, box, cv::Scalar(255), CV_FILLED); // Draw filled bounding boxes on mask
+void TrafficSignDetector::createHOG(HOGDescriptor &hog, vector<vector<float>> &HOG, vector<Mat> &cells){
+    for(int i=0; i<cells.size(); i++) {
+        vector<float> descriptors;
+        hog.compute(cells[i], descriptors);
+        HOG.push_back(descriptors);
     }
+}
 
-    std::vector<std::vector<cv::Point>> contours;
-    // Find contours in mask
-    // If bounding boxes overlap, they will be joined by this function call
-    cv::findContours(mask, contours, CV_RETR_EXTERNAL, CV_CHAIN_APPROX_SIMPLE);
-    for (int j = 0; j < contours.size(); j++)
-    {
-        outputBoxes.push_back(cv::boundingRect(contours.at(j)));
+void TrafficSignDetector::cvtVector2Matrix(vector<vector<float>> &HOG, Mat &mat){
+    int descriptor_size = HOG[0].size();
+
+    for(int i=0; i<HOG.size(); i++){
+        for(int j=0; j<descriptor_size; j++){
+            mat.at<float>(i, j) = HOG[i][j];
+        }
     }
 }
 
 
-void TrafficSignDetector::getSVMParams(cv::ml::SVM *svm)
-{
-	std::cout << "Kernel type     : " << svm->getKernelType() << std::endl;
-	std::cout << "Type            : " << svm->getType() << std::endl;
-	std::cout << "C               : " << svm->getC() << std::endl;
-	std::cout << "Degree          : " << svm->getDegree() << std::endl;
-	std::cout << "Nu              : " << svm->getNu() << std::endl;
-	std::cout << "Gamma           : " << svm->getGamma() << std::endl;
+// =====================================================
+// ******* SVM ********
+// ======================================================
+
+Ptr<SVM> TrafficSignDetector::svmInit(float C, float gamma){
+    Ptr<SVM> svm = SVM::create();
+    svm->setGamma(gamma);
+    svm->setC(C);
+    svm->setKernel(SVM::LINEAR);
+    svm->setType(SVM::C_SVC);
+
+    return svm;
+}
+
+void TrafficSignDetector::getSVMParams(SVM *svm){
+    cout << "Kernel type     : " << svm->getKernelType() << endl;
+    cout << "Type            : " << svm->getType() << endl;
+    cout << "C               : " << svm->getC() << endl;
+    cout << "Degree          : " << svm->getDegree() << endl;
+    cout << "Nu              : " << svm->getNu() << endl;
+    cout << "Gamma           : " << svm->getGamma() << endl;
+}
+
+void TrafficSignDetector::svmPredict(Ptr<SVM> svm, Mat &test_response, Mat &test_mat ){
+    svm->predict(test_mat, test_response);
 }
 
 
-// Receive list of detected objects and classify them
-// Return: sign type id. Return -1 if the object is not a traffic sign
-// hogDetectorsPath: path to HOG detectors
-void TrafficSignDetector::classify(cv::Mat & img,                 std::vector<Rect>& boundaries,
-            cv::Ptr<cv::ml::SVM> & svm,
-            std::vector<TrafficSign> & classification_results
-    ) {
+// =====================================================
+// ******* DETECT ********
+// ======================================================
 
 
-    cv::Mat cropImg;
+void TrafficSignDetector::inRangeHSV(Mat &img, Mat &bin_img, cv::Scalar low_HSV, cv::Scalar high_HSV){
+	
+	Mat img_HSV, img_threshold;
 
+	// Convert color from BGR to HSV color space
+	cvtColor(img, img_HSV, COLOR_BGR2HSV);
+
+	// Mark out all points in range, return binary image
+	inRange(img_HSV, low_HSV, high_HSV, bin_img);
+}
+
+void TrafficSignDetector::boundRectBinImg(Mat &img, vector<Rect> &bound_rects){
+	int eps_diff = 0.01;
+
+	vector<vector<Point>> contours;
+	vector<Vec4i> hierarchy;
+
+	findContours(img, contours, hierarchy, RETR_TREE, CHAIN_APPROX_SIMPLE, Point(0, 0));
+
+	vector<vector<Point>> contours_poly( contours.size() );
+	Rect rect;
+
+	for(int i=0; i<contours.size(); i++){
+
+		int contour_area = contourArea(contours[i]);
+		approxPolyDP(Mat(contours[i]), contours_poly[i], 3, true);
+		rect = boundingRect(Mat(contours_poly[i]));
+
+		bound_rects.push_back(rect);
+
+	}
+}
+
+void TrafficSignDetector::boundRectByColor(Mat &img, vector<Rect> &bound_rects, cv::Scalar low_HSV, cv::Scalar high_HSV){
+	// Apply threshold for BGR image
+	Mat bin_img;
+	inRangeHSV(img, bin_img, low_HSV, high_HSV);
+	// imshow("bin_img", bin_img);
+
+	// Get all bound rects
+	boundRectBinImg(bin_img, bound_rects);
+}
+
+void TrafficSignDetector::mergeRects(vector<Rect> &bound_rects){
+	int findIntersection;
+
+	do{
+		findIntersection = false;
+
+		for(auto it_1 = bound_rects.begin(); it_1 != bound_rects.end(); it_1++){
+
+			for(auto it_2 =it_1+1; it_2 != bound_rects.end();){
+				if( ((*it_1) & (*it_2)).area() > 0 ){
+					findIntersection = true;
+					*it_1 = ((*it_1) | (*it_2));
+					bound_rects.erase(it_2);
+				} else {
+					it_2++;
+				}
+			}
+
+		}
+	} while(findIntersection == true);
+}
+
+void TrafficSignDetector::extendRect(Rect &rect, int extend_dist, int limit_br_x, int limit_br_y){
+	int tl_x = (rect.tl().x - extend_dist > 0) ? rect.tl().x - extend_dist : rect.tl().x;
+	int tl_y = (rect.tl().y - extend_dist > 0) ? rect.tl().y - extend_dist : rect.tl().y;
+	int br_x = (rect.br().x + extend_dist < limit_br_x) ? rect.br().x + extend_dist : rect.br().x;
+	int br_y = (rect.br().y + extend_dist < limit_br_y) ? rect.br().y + extend_dist : rect.br().y;
+	rect.x = tl_x;
+	rect.y = tl_y;
+	rect.width = br_x - tl_x;
+	rect.height = br_y - tl_y;
+}
+
+bool TrafficSignDetector::checkSimilarityRect(Rect A, Rect B, float eps_diff){
+	float x = (float)(A|B).area();
+	float y = (float)A.area() + (float)B.area() - (float)(A&B).area();
+	float ratio = x / y;
+	if( ratio < eps_diff ){
+		return true;
+	}
+	return false;
+}
+
+
+// =====================================================
+// ******* CLASSIFY ********
+// ======================================================
+
+void TrafficSignDetector::classifyRect(Mat &img, 
+	vector<Rect> &curr_rects, vector<int> &curr_labels, 
+	vector<Rect> &prev_rects, vector<int> &prev_labels, 
+	int size, float eps_diff){
+
+	for(int i=0; i<curr_rects.size(); i++){
+
+		int classified = false;
+		int count = 0;
+
+		for(int j=0; j<prev_rects.size(); j++){
+			if(checkSimilarityRect(curr_rects[i], prev_rects[j], eps_diff) ==  true){
+				// found the similar classified rect in prev_rects, we classify curr rect base on prev_labels
+				count++;
+				if(count > 2){
+					curr_labels.push_back(prev_labels[i]);
+					classified = true;
+					break;
+				}
+			}
+		}
+
+		if(classified == false){
+			// the curr_rects is not appear in prev_rects, so we have to use classifySVM
+			Mat roi_img = img(curr_rects[i]);
+			resize(roi_img, roi_img, Size(size, size));
+			int label = classifySVM(roi_img);
+			curr_labels.push_back(label);
+		}
+
+	}
+}
+
+void TrafficSignDetector::trafficDetect(Mat &img,
+	vector<Rect> &curr_rects, vector<int> &curr_labels,
+	vector<Rect> &prev_rects, vector<int> &prev_labels,
+	int size, float eps_diff,
+	cv::Scalar low_HSV, cv::Scalar high_HSV){
+
+	// Detect all curr_rects by color and contour area
+    boundRectByColor(img, curr_rects, low_HSV, high_HSV);
+
+    // Merge all rects have intersection greater than 0
+    mergeRects(curr_rects);
+
+    // Merge all neighbor rects by extending their size in 4 directions, then merge again by mergeRects function
+    for(int i=0; i<curr_rects.size(); i++){
+        extendRect(curr_rects[i], 1, img.cols, img.rows);
+    }
+    mergeRects(curr_rects);
+
+    // filter curr_rects by height and width
+    for(auto it = curr_rects.begin(); it != curr_rects.end();){
+	   	float width = (*it).width;
+	    float height = (*it).height;
+	    float ratio = (float)(height/width);
+
+	    if(height < size*0.8 || ratio <=0.9 || ratio > 1.5){
+	    	curr_rects.erase(it);
+	    } else {
+	    	it++;
+	    }
+    }
+
+	classifyRect(img, 
+				curr_rects, curr_labels, 
+				prev_rects, prev_labels, 
+				size, eps_diff);
+
+	for(int i=0; i<curr_rects.size(); i++){
+		prev_rects.push_back(curr_rects[i]);
+		prev_labels.push_back(curr_labels[i]);
+	}
+}
+
+
+int TrafficSignDetector::classifySVM(Mat &img){
+    
+	vector<Mat>	cells;
+    cvtColor(img, img, COLOR_BGR2GRAY);
+	cells.push_back(img);
+
+	vector<vector<float>> HOG;
+    createHOG(hog, HOG, cells);
+
+    Mat mat(HOG.size(), HOG[0].size(), CV_32FC1);
+
+    cvtVector2Matrix(HOG, mat);
+
+    Mat response;
+    svmPredict(model, response, mat);
+
+    return (int)(response.at<float>(0, 0));
+}
+
+
+void TrafficSignDetector::recognize(const cv::Mat & input, std::vector<TrafficSign> & classification_results) {
+
+    cv::Mat frame = input.clone();
+
+    // Clear the result first
     classification_results.clear();
 
-    //cv::namedWindow( "Crop");
-    for (std::vector<Rect>::iterator boundary = boundaries.begin(); boundary != boundaries.end(); boundary++) {
-                
-        cv::Mat croppedRef = img(*boundary);
-        //cv::Mat croppedRef(img, boundary->r);
+    vector<Scalar> color{
+        Scalar(255, 0, 0),
+        Scalar(0, 255, 0),
+        Scalar(0, 0, 255),
+    };
 
+    ////////// USE THIS FUNCTION IN YOUR CODE TO DETECT AND CLASSIY TRAFFIC SIGN //////////
 
-        if (croppedRef.empty()) {
-            break;
+    vector<Rect> curr_rects;
+    vector<int> curr_labels;
+
+    // I also classify base on width and height of rect, you can modify those number in this function
+    trafficDetect(frame, 
+        curr_rects, curr_labels,
+        prev_rects, prev_labels,
+        size, eps_diff,
+        color_ranges[0].begin, color_ranges[0].end);
+
+    // hist enque the curr_rects size
+    hist.push_back(curr_rects.size());
+
+    // save only 5 previous frames
+    if(hist.size() > 5){
+        // "deque" prev_rects and prev_labels by delete hist[0] number of first elements
+        prev_rects.erase(prev_rects.begin(), prev_rects.begin() + hist[0]);
+        prev_labels.erase(prev_labels.begin(), prev_labels.begin() + hist[0]);
+
+        // deque first element in hist
+        hist.erase(hist.begin());
+    }
+
+    // draw bounding rect and color based on label
+    for(int i=0; i<curr_rects.size(); i++){
+        if(curr_labels[i] != 0){
+            rectangle(frame, curr_rects[i].tl(), curr_rects[i].br(), color[curr_labels[i]], 1, 8, 0);
+
+            classification_results.push_back(TrafficSign(curr_labels[i], curr_rects[i]));
         }
-
-        // crop the area which containing traffic sign
-        croppedRef.copyTo(cropImg);
-        // Obtain a grayscale matrix
-        cv::cvtColor(cropImg, cropImg, CV_BGR2GRAY);
-
-
-        // resize
-        cv::Mat resizedImg;
-        cv::resize(cropImg, resizedImg, cv::Size(32, 32));
-
-
-        std::vector<float> descriptors;
-        hog.compute(resizedImg, descriptors);
-        cv::Mat Hogfeat(1, descriptors.size(), CV_32FC1);
-        for (size_t i = 0; i < descriptors.size(); i++)
-        {
-            Hogfeat.at<float>(0, i) = descriptors.at(i);
-        }
-        Hogfeat.reshape(1, 1); //flattened to a single row
-
-
-        cv::Mat testResponse;
-        float retConf = svm->predict(Hogfeat, testResponse, true);
-                
-        std::string label;
-        int id = -1;
-        for (int i = 0; i < testResponse.rows; i++) {
-
-            id = static_cast<int>(testResponse.at<float>(i, 0));
-
-            if (id == TrafficSign::SignType::NO_SIGN) break;
-            else if (id == TrafficSign::SignType::TURN_LEFT) label = "RE TRAI";
-            else if (id == TrafficSign::SignType::TURN_RIGHT) label = "RE PHAI";
-
-            int baseline = 0;
-            rectangle(img, *boundary, Scalar(0,0,255), 2);
-            cv::Size text = cv::getTextSize(label, CV_FONT_HERSHEY_PLAIN, 1, 1, &baseline);
-            cv::rectangle(img, boundary->tl() + cv::Point(0, baseline), boundary->tl() + cv::Point(text.width, -text.height), CV_RGB(0,255,0), CV_FILLED);
-            cv::putText(img, label, boundary->tl(), CV_FONT_HERSHEY_PLAIN, 1, Scalar(0,0,0));
-       
-            if (id == TrafficSign::SignType::TURN_LEFT || id == TrafficSign::SignType::TURN_RIGHT) {
-                classification_results.push_back(TrafficSign(id, *boundary));
-            
-            }
-       
-       
-        }
-
     }
 
-}
-
-
-std::vector<cv::Rect> TrafficSignDetector::detect(const cv::Mat & input) {
-
-    cv::Mat img = input.clone();
-
-    // Applying a Median filter
-    // For a better result in segmentation
-	cv::medianBlur(img, img, 3);
-
-    // Convert input image to HSV
-	cv::Mat hsv_image;
-	cv::cvtColor(img, hsv_image, cv::COLOR_BGR2HSV);
-
-    cv::Mat hue_range; // filter matrix for both major and minor color
-    cv::Mat result_img; // result matrix for both major and minor color
-
-
-    // Process the first color range first
-    if (color_ranges.size() == 0) {
-        std::cout << "Color range is empty. Break!" << std::endl;
-        std::vector<cv::Rect> empty_set;
-        return empty_set;
-    }
-
-    cv::inRange(hsv_image, color_ranges[0].begin, color_ranges[0].end, hue_range);
-    cv::addWeighted(hue_range, 1, hue_range, 1, 0.0, result_img);
-
-    result_img.copyTo(result_img);
-
-    // Loop for all color ranges
-    for (size_t i = 1; i < color_ranges.size(); i++) {
-        cv::inRange(hsv_image, color_ranges[i].begin, color_ranges[i].end, hue_range);
-        cv::addWeighted(result_img, 1, hue_range, 1, 0.0, result_img);
-    }
-    
-    // Blur the result
-    cv::GaussianBlur(result_img, result_img, cv::Size(1, 1), 2, 2);
-
-    int morph_size = 3;
-    cv::Mat close_kernel = getStructuringElement( cv::MORPH_RECT, cv::Size( 2*morph_size + 1, 2*morph_size+1 ), cv::Point( morph_size, morph_size ) );
-
-
-    //Open the area - Remove noise and expand the detected area
-    cv::morphologyEx( result_img, result_img, cv::MORPH_CLOSE, close_kernel, cv::Point(-1,-1), 1 );   
-
-    cv::Mat openKernel = getStructuringElement( cv::MORPH_RECT, cv::Size( 2*morph_size + 1, 2*morph_size+1 ), cv::Point( morph_size, morph_size ) );
-    cv::morphologyEx( result_img, result_img, cv::MORPH_OPEN, openKernel, cv::Point(-1,-1), 1 );   
-
-    // Threshold
-    cv::threshold(result_img, result_img, 1, 255, cv::THRESH_BINARY);
-
-    /// Find contours
-    std::vector<std::vector<cv::Point> > contours;
-    cv::findContours( result_img, contours, CV_RETR_TREE, CV_CHAIN_APPROX_SIMPLE, cv::Point(0, 0) );
-
-
-    /// Find the boundary
-    
-    std::vector<cv::Rect> bound_rects( contours.size() );
-    cv::Rect rect;
-    
-
-    for(size_t i = 0; i < contours.size(); i++ ) {
-        rect = cv::boundingRect( cv::Mat(contours[i]) );
-        // rect = enlargeROI(img, rect, 2);
-
-        float area = rect.area();
-        if (area > 10 && area < 4000) {
-            bound_rects.push_back(rect);
-        }
-        
-    }
-
-    std::vector<cv::Rect> merged_bound_rects;
-    mergeOverlappingBoxes(bound_rects, img, merged_bound_rects);
-
-    
-    return merged_bound_rects;
-
-}
-
-
-void TrafficSignDetector::recognize(cv::Mat & input, std::vector<TrafficSign> & classification_results) {
-
-    cv::Mat draw = input.clone();
-
-    std::vector<cv::Rect> detection_results = detect(input);
-
-    classify(draw, detection_results, svm, classification_results);
-
-    for(size_t i = 0; i < detection_results.size(); i++ ) {
-        rectangle(draw, detection_results[i], Scalar(0, 255, 0), 1);
-    }
-
-    cv::imshow("Traffic Sign Recognition", draw);
+    resize(frame, frame, Size(frame.cols*2, frame.rows*2));
+    imshow("Debug Traffic Sign", frame);
     cv::waitKey(1);
 
-
 }
+
 
 void TrafficSignDetector::readColorFile() {
     // Load color file
