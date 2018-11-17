@@ -1,0 +1,203 @@
+#include "car_control.h"
+
+
+CarControl::CarControl(std::string team)
+{
+    team_name = team;
+    steer_publisher = node_obj1.advertise<std_msgs::Float32>(team_name + "_steerAngle",10);
+    speed_publisher = node_obj2.advertise<std_msgs::Float32>(team_name + "_speed",10);
+}
+
+CarControl::~CarControl() {}
+
+void CarControl::driverCar(float speed_data, float angle_data) {
+    std_msgs::Float32 angle;
+    std_msgs::Float32 speed;
+
+    angle.data = angle_data;
+    speed.data = speed_data;
+
+    steer_publisher.publish(angle);
+    speed_publisher.publish(speed);
+}
+
+
+void CarControl::driverCar(Road & road, const std::vector<TrafficSign> & traffic_signs) {
+
+    // FIND THE CAR POSITION
+
+    // Sort the middle points asc based on y
+    std::sort(std::begin(road.middle_points), std::end(road.middle_points),
+            [] (const cv::Point& lhs, const cv::Point& rhs) {
+        return lhs.y < rhs.y;
+    });
+
+    // Choose an interested point (point having y = 60% ymax)
+    int index_of_interested_point = road.middle_points.size() / 5 * 3;
+
+    // Do nothing when we cannot find a reasonable middle point
+    if (index_of_interested_point < 5) {
+        return;
+    }
+
+    cv::Point middle_point = road.middle_points[index_of_interested_point];
+    
+    if (debug) {
+        std::cout << middle_point << std::endl;
+    }
+    
+    cv::Point center_point = cv::Point(Road::road_center_line_x, middle_point.y);
+
+
+    // SET CONTROLLING PARAMS
+    float speed_data = MAX_SPEED;
+    int delta = center_point.x - middle_point.x;
+    float angle_data = - delta / 3;
+
+
+    // FIND AND AVOID OBSTACLE
+    
+    // Print line diff
+    if (debug) {
+        ObstacleDetector::printLineDiff(road.middle_points);
+    }
+    
+
+    // Calculate the diff b/w current time and the last obstacle time
+    // If the time is out of obstacle avoiding range, reset obstacle_avoid_coeff
+    auto current_time = std::chrono::system_clock::now();
+    std::chrono::duration<double> time_diff = current_time-obstacle_avoiding_time_point;
+    if (is_turning == true && time_diff.count() > 1) {
+        obstacle_avoid_coeff = 0;
+        ++success_turning_times;
+    }
+
+    if (debug) {
+        std::cout << "LAST OBSTACLE TIME: " << time_diff.count() << std::endl;
+        std::cout << "OBSTACLE COEFF: " << obstacle_avoid_coeff << std::endl;
+    }
+    
+
+    // // Find the obstacle and adjust obstacle_avoid_coeff
+    // for (int i = road.middle_points.size()-5; i >=  10; --i) {
+    //     int diff = road.middle_points[i+3].x - road.middle_points[i].x;
+    //     int distance_to_obstacle;
+
+    //     if (abs(diff) > 5 and abs(diff) < 10) {
+    //         distance_to_obstacle = Road::road_center_line_x - road.middle_points[i].y;
+            
+    //         if (debug) {
+    //             std::cout << "OBSTACLE DISTANCE: " << distance_to_obstacle << std::endl;
+    //         }
+
+    //         obstacle_avoiding_time_point = std::chrono::high_resolution_clock::now();
+        
+    //         if (diff > 0) {
+    //             obstacle_avoid_coeff = -5;
+    //             break;
+    //         } else if (diff < 0) {
+    //             obstacle_avoid_coeff = +5;
+    //             break;
+    //         }
+        
+    //     }
+
+    // }
+    
+
+    // if (road.lane_area > 33000) {
+
+    //     if (success_turning_times == 0) {
+    //         turning_coeff = 20;
+    //         speed_data = 10;
+    //         turning_time_point = std::chrono::system_clock::now();
+    //         is_turning = true;
+    //     }
+            
+    // }
+
+
+    if (!traffic_signs.empty()) {
+        std::cout << "TRAFFIC SIGN DETECTED!" << std::endl;
+
+        std::cout << "Number: " << traffic_signs.size() << std::endl;
+
+        for (int i = 0; i < traffic_signs.size(); ++i) {
+            std::cout << traffic_signs[i].id << " : " << traffic_signs[i].rect << std::endl;
+        }
+
+        traffic_sign_appearance = 8;
+
+        if (traffic_signs[0].rect.area() > 1000) {
+
+            prepare_to_turn = true;
+            last_sign_id = traffic_signs[0].id;
+
+        }
+    }
+
+
+    // Giảm tốc khi đến khúc cua
+    if (prepare_to_turn) {
+        speed_data = 30;
+    }
+
+    // Khi nhận thấy đang có tín hiệu rẽ,
+    // và diện tích đường mở rộng (đã đến ngã ba, ngã tư) thì thực hiện rẽ
+    if (prepare_to_turn && road.lane_area > 38000) {
+        prepare_to_turn = false;
+        std::cout << "TURNING " << last_sign_id << std::endl;
+
+        if (last_sign_id == 5) {
+            turning_coeff = -50;
+        } else if (last_sign_id == 6) {
+            turning_coeff = +50;
+        }
+        
+        speed_data = 10;
+        turning_time_point = std::chrono::system_clock::now();
+        is_turning = true;
+    }
+
+
+
+    std::cout << "turning_coeff: " << turning_coeff << std::endl;
+
+    current_time = std::chrono::system_clock::now();
+    time_diff = current_time-turning_time_point;
+    if (time_diff.count() > 1) {
+        turning_coeff = 0;
+        speed_data = 50;
+        is_turning = false;
+    }
+
+    angle_data += obstacle_avoid_coeff + turning_coeff;
+
+    if (turning_coeff != 0) {
+        angle_data = turning_coeff;
+    }
+
+    std::cout << "lane_area: " << road.lane_area << std::endl;
+    
+    // ADJUST TO FIT MAX VALUES
+    if (angle_data > MAX_ANGLE) angle_data = MAX_ANGLE;
+    if (angle_data < -MAX_ANGLE) angle_data = -MAX_ANGLE;
+
+    // PUBLISH MESSAGE
+    if (debug) {
+        std::cout << "SPEED: " << speed_data << std::endl;
+        std::cout << "ANGLE: " << angle_data << std::endl;
+    }
+    
+
+    std_msgs::Float32 angle;
+    std_msgs::Float32 speed;
+
+    angle.data = angle_data;
+    speed.data = speed_data;
+
+    steer_publisher.publish(angle);
+    speed_publisher.publish(speed);
+
+
+}
