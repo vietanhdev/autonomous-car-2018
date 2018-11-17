@@ -12,6 +12,7 @@
 #include "traffic_sign_detector.h"
 #include "car_control.h"
 
+#define ROS_PACKAGE "ict60_racecar"
 #define TEAM "Team1"
 #define SHOW_ORIGIN_IMAGE true
 #define DEBUG_FIND_LANES true
