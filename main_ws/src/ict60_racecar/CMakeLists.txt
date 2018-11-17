@@ -16,7 +16,6 @@ include_directories(${OpenCV_INCLUDE_DIRS})
 
 catkin_package(
   INCLUDE_DIRS include
-  LIBRARIES api_lane_detection
   CATKIN_DEPENDS roscpp
   DEPENDS system_lib
 )
@@ -26,33 +25,38 @@ include_directories(
   ${catkin_INCLUDE_DIRS}
 )
 
-add_library(api_lane_detection
+add_executable(racecar
+  src/racecar.cpp
   src/car_control.cpp
   src/lane_detector.cpp
+  src/traffic_sign.cpp
+  src/timer.cpp
 )
 
-add_executable(racecar src/racecar.cpp src/traffic_sign.cpp)
-add_executable(manual_control src/manual_control.cpp)
+add_executable(manual_control
+  src/manual_control.cpp
+  src/car_control.cpp
+  src/lane_detector.cpp
+  src/timer.cpp
+)
 
 add_dependencies(racecar ${catkin_EXPORTED_TARGETS})
 add_dependencies(manual_control ${catkin_EXPORTED_TARGETS})
 
 target_link_libraries(
   racecar
-  api_lane_detection
   ${catkin_LIBRARIES}
   ${OpenCV_LIBS}
   ${Boost_LIBRARIES}
 )
 target_link_libraries(
   manual_control
-  api_lane_detection
   ${catkin_LIBRARIES}
   ${OpenCV_LIBS}
   ${Boost_LIBRARIES}
 )
 
-install(TARGETS api_lane_detection ${ADDITIONAL_EXECUTABLES}
+install(TARGETS ${ADDITIONAL_EXECUTABLES}
    ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
    LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
    RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}

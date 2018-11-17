@@ -2,9 +2,9 @@
 #include <ros/package.h>
 #include <image_transport/image_transport.h>
 #include <cv_bridge/cv_bridge.h>
-#include <chrono>
 #include <opencv2/highgui/highgui.hpp>
 
+#include "timer.h"
 #include "road.h"
 #include "car_control.h"
 #include "lane_detector.h"
@@ -26,7 +26,7 @@ Road road;
 // To calculate the speed of image transporting
 // ==> The speed of the hold system => Adjust the car controlling params
 long long int num_of_frames = 0;
-std::chrono::time_point<std::chrono::high_resolution_clock> start_time_point;
+Timer::time_point_t start_time_point;
 
 void imageCallback(const sensor_msgs::ImageConstPtr& msg)
 {
@@ -54,9 +54,8 @@ void imageCallback(const sensor_msgs::ImageConstPtr& msg)
     }
 
     ++num_of_frames;
-    auto current_time = std::chrono::system_clock::now();
-    std::chrono::duration<double> time_diff = current_time-start_time_point;
-    cout << "Simulation speed: " << num_of_frames / time_diff.count() << endl;
+
+    cout << "Simulation speed: " << num_of_frames / Timer::calcTimePassed(start_time_point) << endl;
 
 }
 
@@ -75,7 +74,7 @@ int main(int argc, char **argv)
 
     cv::startWindowThread();
 
-    start_time_point = std::chrono::system_clock::now();
+    start_time_point = Timer::getCurrentTime();
 
     ros::NodeHandle nh;
     image_transport::ImageTransport it(nh);

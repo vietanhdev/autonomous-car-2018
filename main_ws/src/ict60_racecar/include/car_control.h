@@ -3,7 +3,7 @@
 #include <opencv2/highgui/highgui.hpp>
 #include <opencv2/imgproc/imgproc.hpp>
 #include <opencv2/opencv.hpp>
-#include <chrono>
+#include "timer.h"
 
 #include <ros/ros.h>
 #include "std_msgs/Float32.h"
@@ -36,7 +36,7 @@ private:
     std::string team_name;
 
     int obstacle_avoid_coeff = 0;
-    std::chrono::time_point<std::chrono::high_resolution_clock> obstacle_avoiding_time_point;
+    Timer::time_point_t obstacle_avoiding_time_point;
 
 
     int last_sign_id = -1;
@@ -46,7 +46,7 @@ private:
     int success_turning_times = 0;
     int turning_coeff = 0;
 
-    std::chrono::time_point<std::chrono::high_resolution_clock> turning_time_point;
+    Timer::time_point_t turning_time_point;
 
     ros::NodeHandle node_obj1;
     ros::NodeHandle node_obj2;

@@ -93,15 +93,13 @@ void CarControl::driverCar(Road & road, const std::vector<TrafficSign> & traffic
 
     // Calculate the diff b/w current time and the last obstacle time
     // If the time is out of obstacle avoiding range, reset obstacle_avoid_coeff
-    auto current_time = std::chrono::system_clock::now();
-    std::chrono::duration<double> time_diff = current_time-obstacle_avoiding_time_point;
-    if (is_turning == true && std::chrono::duration_cast<std::chrono::milliseconds>(time_diff).count() > 1000) {
+    if (is_turning == true && Timer::calcTimePassed(obstacle_avoiding_time_point) > 1000) {
         obstacle_avoid_coeff = 0;
         ++success_turning_times;
     }
 
     if (debug_flag) {
-        std::cout << "LAST OBSTACLE TIME: " << time_diff.count() << std::endl;
+        std::cout << "LAST OBSTACLE TIME: " << Timer::calcTimePassed(obstacle_avoiding_time_point) << std::endl;
         std::cout << "OBSTACLE COEFF: " << obstacle_avoid_coeff << std::endl;
     }
     
@@ -161,7 +159,7 @@ void CarControl::driverCar(Road & road, const std::vector<TrafficSign> & traffic
 
     // Khi nhận thấy đang có tín hiệu rẽ,
     // và diện tích đường mở rộng (đã đến ngã ba, ngã tư) thì thực hiện rẽ
-    if (prepare_to_turn && road.lane_area > 18000) {
+    if (prepare_to_turn && road.lane_area > 16000) {
         prepare_to_turn = false;
         std::cout << "TURNING " << last_sign_id << std::endl;
 
@@ -180,9 +178,7 @@ void CarControl::driverCar(Road & road, const std::vector<TrafficSign> & traffic
 
     std::cout << "turning_coeff: " << turning_coeff << std::endl;
 
-    current_time = std::chrono::system_clock::now();
-    time_diff = current_time-turning_time_point;
-    if (std::chrono::duration_cast<std::chrono::milliseconds>(time_diff).count() > 1000) {
+    if (Timer::calcTimePassed(turning_time_point) > 1000) {
         turning_coeff = 0;
         speed_data = 50;
         is_turning = false;
