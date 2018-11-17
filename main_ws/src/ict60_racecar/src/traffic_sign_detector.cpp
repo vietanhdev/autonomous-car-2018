@@ -175,10 +175,10 @@ std::vector<cv::Rect> TrafficSignDetector::detect(const cv::Mat & input) {
 	cv::medianBlur(img, img, 3);
 
     // Convert input image to HSV
-	cv::Mat hsvImage;
-	cv::cvtColor(img, hsvImage, cv::COLOR_BGR2HSV);
+	cv::Mat hsv_image;
+	cv::cvtColor(img, hsv_image, cv::COLOR_BGR2HSV);
 
-    cv::Mat hueRange; // filter matrix for both major and minor color
+    cv::Mat hue_range; // filter matrix for both major and minor color
     cv::Mat result_img; // result matrix for both major and minor color
 
 
@@ -189,16 +189,15 @@ std::vector<cv::Rect> TrafficSignDetector::detect(const cv::Mat & input) {
         return empty_set;
     }
 
-    cv::inRange(hsvImage, color_ranges[0].begin, color_ranges[0].end, hueRange);
-    cv::addWeighted(hueRange, 1, hueRange, 1, 0.0, result_img);
+    cv::inRange(hsv_image, color_ranges[0].begin, color_ranges[0].end, hue_range);
+    cv::addWeighted(hue_range, 1, hue_range, 1, 0.0, result_img);
 
-    // We suppose that the first color is always major color
     result_img.copyTo(result_img);
 
     // Loop for all color ranges
     for (size_t i = 1; i < color_ranges.size(); i++) {
-        cv::inRange(hsvImage, color_ranges[i].begin, color_ranges[i].end, hueRange);
-        cv::addWeighted(result_img, 1, hueRange, 1, 0.0, result_img);
+        cv::inRange(hsv_image, color_ranges[i].begin, color_ranges[i].end, hue_range);
+        cv::addWeighted(result_img, 1, hue_range, 1, 0.0, result_img);
     }
     
     // Blur the result
@@ -243,7 +242,6 @@ std::vector<cv::Rect> TrafficSignDetector::detect(const cv::Mat & input) {
     mergeOverlappingBoxes(bound_rects, img, merged_bound_rects);
 
     
-
     return merged_bound_rects;
 
 }
