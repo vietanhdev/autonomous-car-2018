@@ -307,7 +307,7 @@ void LaneDetector::findLaneEdges(const cv::Mat & img, Road & road) {
         ) {
             middle = (left + right) / 2;
 
-            if (debug_show_image) {
+            if (debug_flag) {
                 circle(tmp, middle, 1, cv::Scalar(255,0,0), 2);
             }
 
@@ -317,14 +317,14 @@ void LaneDetector::findLaneEdges(const cv::Mat & img, Road & road) {
 
         }
 
-        if (debug_show_image) {
+        if (debug_flag) {
             circle(tmp, left, 1, cv::Scalar(0,255,0), 2);
             circle(tmp, right, 1, cv::Scalar(0,0,255), 2);
         }
     }
 
     
-    if (debug_show_image) {
+    if (debug_flag) {
         cv::imshow("edge points", tmp);
         cv::waitKey(1);
     }  
@@ -346,7 +346,7 @@ void LaneDetector::findLanes(const cv::Mat & input, Road & road) {
 
     img = img | canny_edges_bgr;
 
-    if (debug_show_image) {
+    if (debug_flag) {
         cv::imshow("img + canny_edges", img);
         cv::waitKey(1);
     }  
@@ -358,7 +358,7 @@ void LaneDetector::findLanes(const cv::Mat & input, Road & road) {
     // Dont just return
     if (!lane_mask_result) return;
 
-    if (debug_show_image) {
+    if (debug_flag) {
         cv::imshow("lane_mask", lane_mask);
         cv::waitKey(1);
     }  
@@ -367,16 +367,26 @@ void LaneDetector::findLanes(const cv::Mat & input, Road & road) {
 
     removeCenterLaneLine(lane_mask, lane_mask);
 
-    if (debug_show_image) {
+    if (debug_flag) {
         cv::imshow("lane_mask > perspective transform", lane_mask);
         cv::waitKey(1);
     }  
 
     findLaneEdges(lane_mask, road);
 
+    
+    // Calculate lane area by counting white point
+    lane_area = 0;
+    for (size_t i = 0; i < lane_mask.rows; ++i) {
+        for (size_t j = 0; j < lane_mask.cols; ++j) {
+            if (lane_mask.at<uchar>(i, j) > 0) {
+                ++lane_area;
+            }
+        }
+    }
     road.lane_area = lane_area;
 
-    if (debug_show_image) {
+    if (debug_flag) {
         cv::imshow("canny_edges", canny_edges);
         cv::waitKey(1);
     } 

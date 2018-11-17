@@ -70,8 +70,8 @@ int main(int argc, char **argv)
 
 
     // SET DEBUG OPTIONS
-    lane_detector->debug_show_image = DEBUG_FIND_LANES;
-    car->debug = DEBUG_CAR_CONTROL;
+    lane_detector->debug_flag = DEBUG_FIND_LANES;
+    car->debug_flag = DEBUG_CAR_CONTROL;
 
     cv::startWindowThread();
 

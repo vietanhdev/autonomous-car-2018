@@ -10,16 +10,30 @@
 #include <string>
 #include <vector>
 #include <ctime>
+#include <chrono>
 
-struct TrafficSignStructure {
+// struct TrafficSignStructure {
+//         int id;
+//         cv::Rect rect;
+//         TrafficSignStructure(int id, cv::Rect rect) : id(id), rect(rect)
+//         {
+//         }
+// };
+
+// typedef struct TrafficSignStructure TrafficSign; 
+
+class TrafficSign {
+    public:
         int id;
         cv::Rect rect;
-        TrafficSignStructure(int id, cv::Rect rect) : id(id), rect(rect)
-        {
+        std::chrono::time_point<std::chrono::high_resolution_clock> observe_time;
+
+        TrafficSign(int id, cv::Rect rect) {
+            this->id = id;
+            this->rect = rect;
+            this->observe_time = std::chrono::system_clock::now();
         }
 };
-
-typedef struct TrafficSignStructure TrafficSign; 
 
 class TrafficSignDetector {
 

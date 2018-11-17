@@ -12,7 +12,7 @@ class LaneDetector {
 
     public:
 
-    bool debug_show_image = false;
+    bool debug_flag = false;
 
     // ==== CONFIGURATION ====
 

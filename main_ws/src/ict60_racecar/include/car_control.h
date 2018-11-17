@@ -21,7 +21,7 @@ class CarControl
 {
 public:
 
-    bool debug = false;
+    bool debug_flag = false;
 
     const int MAX_SPEED = 60;
     const int MAX_ANGLE = 60;
@@ -39,13 +39,13 @@ private:
     std::chrono::time_point<std::chrono::high_resolution_clock> obstacle_avoiding_time_point;
 
 
-    int traffic_sign_appearance = -1;
     int last_sign_id = -1;
     bool prepare_to_turn = false;
 
     bool is_turning = false;
     int success_turning_times = 0;
     int turning_coeff = 0;
+
     std::chrono::time_point<std::chrono::high_resolution_clock> turning_time_point;
 
     ros::NodeHandle node_obj1;
