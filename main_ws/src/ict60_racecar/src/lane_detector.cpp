@@ -307,11 +307,6 @@ void LaneDetector::findLaneEdges(const cv::Mat & img, Road & road) {
         ) {
             middle = (left + right) / 2;
 
-            if (left.x < 10  || left.y < 10 || right.x < 10 || right.y < 10) {
-                std::cout << left << std::endl;
-                std::cout << right << std::endl;
-            }
-
             if (debug_show_image) {
                 circle(tmp, middle, 1, cv::Scalar(255,0,0), 2);
             }
