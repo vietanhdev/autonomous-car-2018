@@ -7,7 +7,9 @@ using namespace cv::ml;
 TrafficSignDetector::TrafficSignDetector() {
 
     color_file = ros::package::getPath("ict60_racecar") + std::string("/data/blue.color");
-    svm_file = ros::package::getPath("ict60_racecar") + std::string("/data/svm.yml");
+    // svm_file = ros::package::getPath("ict60_racecar") + std::string("/data/svm.yml");
+    svm_file = ros::package::getPath("ict60_racecar") + std::string("/data/svm_an_linear.xml");
+
 
     cout << "color_file: " << color_file << endl;
     cout << "svm_file: " << svm_file << endl;
@@ -17,7 +19,7 @@ TrafficSignDetector::TrafficSignDetector() {
         cv::Size(32,32), //winSize
         cv::Size(8,8), //blocksize
         cv::Size(4,4), //blockStride,
-        cv::Size(2,2), //cellSize,
+        cv::Size(8,8), //cellSize, 
         9, //nbins,
         1, //derivAper,
         -1, //winSigma,
@@ -144,9 +146,9 @@ void TrafficSignDetector::classify(cv::Mat & img,                 std::vector<Re
 
             id = static_cast<int>(testResponse.at<float>(i, 0));
 
-            if (id == -1) break;
-            else if (id == 5) label = "RE TRAI";
-            else if (id == 6) label = "RE PHAI";
+            if (id == TrafficSign::SignType::NO_SIGN) break;
+            else if (id == TrafficSign::SignType::TURN_LEFT) label = "RE TRAI";
+            else if (id == TrafficSign::SignType::TURN_RIGHT) label = "RE PHAI";
 
             int baseline = 0;
             rectangle(img, *boundary, Scalar(0,0,255), 2);
@@ -154,8 +156,9 @@ void TrafficSignDetector::classify(cv::Mat & img,                 std::vector<Re
             cv::rectangle(img, boundary->tl() + cv::Point(0, baseline), boundary->tl() + cv::Point(text.width, -text.height), CV_RGB(0,255,0), CV_FILLED);
             cv::putText(img, label, boundary->tl(), CV_FONT_HERSHEY_PLAIN, 1, Scalar(0,0,0));
        
-            if (id == 5 || id == 6) {
+            if (id == TrafficSign::SignType::TURN_LEFT || id == TrafficSign::SignType::TURN_RIGHT) {
                 classification_results.push_back(TrafficSign(id, *boundary));
+            
             }
        
        

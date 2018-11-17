@@ -114,9 +114,9 @@ void CarControl::driverCar(Road & road, const std::vector<TrafficSign> & traffic
         prepare_to_turn = false;
         std::cout << "TURNING " << last_sign_id << std::endl;
 
-        if (last_sign_id == 5) {
+        if (last_sign_id == TrafficSign::SignType::TURN_LEFT) {
             turning_coeff = -50;
-        } else if (last_sign_id == 6) {
+        } else if (last_sign_id == TrafficSign::SignType::TURN_RIGHT) {
             turning_coeff = +50;
         }
         

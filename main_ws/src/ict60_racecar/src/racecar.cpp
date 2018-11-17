@@ -14,9 +14,9 @@
 
 #define ROS_PACKAGE "ict60_racecar"
 #define TEAM "Team1"
-#define SHOW_ORIGIN_IMAGE true
-#define DEBUG_FIND_LANES true
-#define DEBUG_CAR_CONTROL true
+#define SHOW_ORIGIN_IMAGE false
+#define DEBUG_FIND_LANES false
+#define DEBUG_CAR_CONTROL false
 
 using namespace std;
 using namespace cv;
@@ -58,7 +58,8 @@ void imageCallback(const sensor_msgs::ImageConstPtr& msg)
 
     ++num_of_frames;
 
-    cout << "Simulation speed: " << num_of_frames / Timer::calcTimePassed(start_time_point) << endl;
+    double sim_speed = static_cast<double>(num_of_frames) / Timer::calcTimePassed(start_time_point) * 1000;
+    cout << "Simulation speed: " << sim_speed << endl;
 
 }
 
