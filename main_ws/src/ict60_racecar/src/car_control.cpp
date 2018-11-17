@@ -144,7 +144,7 @@ void CarControl::driverCar(Road & road, const std::vector<TrafficSign> & traffic
 
     // Khi nhận thấy đang có tín hiệu rẽ,
     // và diện tích đường mở rộng (đã đến ngã ba, ngã tư) thì thực hiện rẽ
-    if (prepare_to_turn && road.lane_area > 38000) {
+    if (prepare_to_turn && road.lane_area > 36000) {
         prepare_to_turn = false;
         std::cout << "TURNING " << last_sign_id << std::endl;
 
