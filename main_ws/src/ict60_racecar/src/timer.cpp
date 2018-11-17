@@ -1,4 +1,5 @@
 #include "timer.h"
+#include <iostream> 
 
 Timer::Timer() {
     start_time_point = getCurrentTime();
@@ -16,5 +17,5 @@ Timer::time_duration_t Timer::calcDiff(time_point_t begin, time_point_t end) {
 
 // Get time passed (duration from a time point in the past to current time)
 Timer::time_duration_t Timer::calcTimePassed(time_point_t time_point) {
-    return calcDiff(getCurrentTime(), time_point);
+    return calcDiff(time_point, getCurrentTime());
 }

@@ -11,11 +11,12 @@
 #include <vector>
 #include <math.h>
 
-#include "lane_detector.h"
+
 #include "road.h"
+#include "lane_detector.h"
 #include "obstacle_detector.h"
 #include "traffic_sign.h"
-
+#include "traffic_sign_detector.h"
 
 class CarControl 
 {

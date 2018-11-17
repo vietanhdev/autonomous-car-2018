@@ -30,6 +30,7 @@ add_executable(racecar
   src/car_control.cpp
   src/lane_detector.cpp
   src/traffic_sign.cpp
+  src/traffic_sign_detector.cpp
   src/timer.cpp
 )
 

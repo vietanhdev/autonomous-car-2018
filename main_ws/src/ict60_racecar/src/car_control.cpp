@@ -24,7 +24,7 @@ void CarControl::driverCar(float speed_data, float angle_data) {
 
 void CarControl::driverCar(Road & road, const std::vector<TrafficSign> & traffic_signs) {
 
-    // FIND THE CAR POSITION
+    //  STEP 1: FIND THE CAR POSITION
 
     // Sort the middle points asc based on y
     std::sort(std::begin(road.middle_points), std::end(road.middle_points),
@@ -49,7 +49,7 @@ void CarControl::driverCar(Road & road, const std::vector<TrafficSign> & traffic
     cv::Point center_point = cv::Point(Road::road_center_line_x, middle_point.y);
 
 
-    // FIND THE "QUALITY" OF LANE DETECTION
+    //  STEP 2: FIND THE "QUALITY" OF LANE DETECTION
 
     // The total difference of x of 2 continuous point in the lane line
     // Unit: pixel
@@ -77,13 +77,66 @@ void CarControl::driverCar(Road & road, const std::vector<TrafficSign> & traffic
     std::cout << "average_difference_right: " << average_difference_right << std::endl;
 
 
-    // SET CONTROLLING PARAMS
+    //  STEP 3: FIND THE BASE CONTROLLING PARAMS ( BASED ON LANE LINES )
     float speed_data = MAX_SPEED;
     int delta = center_point.x - middle_point.x;
     float angle_data = - delta / 3;
 
 
-    // FIND AND AVOID OBSTACLE
+    //  STEP 4: ADJUST CONTROLLING PARAMS USING TRAFFIC SIGN DETECTOR
+    if (!traffic_signs.empty()) {
+        std::cout << "TRAFFIC SIGN DETECTED!" << std::endl;
+
+        std::cout << "Number: " << traffic_signs.size() << std::endl;
+
+        for (int i = 0; i < traffic_signs.size(); ++i) {
+            std::cout << traffic_signs[i].id << " : " << traffic_signs[i].rect << std::endl;
+        }
+
+
+        if (traffic_signs[0].rect.area() > 1000) {
+
+            prepare_to_turn = true;
+            last_sign_id = traffic_signs[0].id;
+
+        }
+    }
+
+
+    // Giảm tốc khi đến khúc cua
+    if (prepare_to_turn) {
+        speed_data = 30;
+    }
+
+    // Khi nhận thấy đang có tín hiệu rẽ,
+    // và diện tích đường mở rộng (đã đến ngã ba, ngã tư) thì thực hiện rẽ
+    if (prepare_to_turn && road.lane_area > 18000) {
+        prepare_to_turn = false;
+        std::cout << "TURNING " << last_sign_id << std::endl;
+
+        if (last_sign_id == 5) {
+            turning_coeff = -50;
+        } else if (last_sign_id == 6) {
+            turning_coeff = +50;
+        }
+        
+        speed_data = 10;
+        turning_time_point = std::chrono::system_clock::now();
+        is_turning = true;
+    }
+
+
+
+    std::cout << "turning_coeff: " << turning_coeff << std::endl;
+
+    if (Timer::calcTimePassed(turning_time_point) > 1000) {
+        turning_coeff = 0;
+        speed_data = 50;
+        is_turning = false;
+    }
+
+
+    // STEP 5: FIND AND AVOID OBSTACLE
     
     // Print line diff
     if (debug_flag) {
@@ -131,59 +184,6 @@ void CarControl::driverCar(Road & road, const std::vector<TrafficSign> & traffic
     // }
     
 
-
-
-    if (!traffic_signs.empty()) {
-        std::cout << "TRAFFIC SIGN DETECTED!" << std::endl;
-
-        std::cout << "Number: " << traffic_signs.size() << std::endl;
-
-        for (int i = 0; i < traffic_signs.size(); ++i) {
-            std::cout << traffic_signs[i].id << " : " << traffic_signs[i].rect << std::endl;
-        }
-
-
-        if (traffic_signs[0].rect.area() > 1000) {
-
-            prepare_to_turn = true;
-            last_sign_id = traffic_signs[0].id;
-
-        }
-    }
-
-
-    // Giảm tốc khi đến khúc cua
-    if (prepare_to_turn) {
-        speed_data = 30;
-    }
-
-    // Khi nhận thấy đang có tín hiệu rẽ,
-    // và diện tích đường mở rộng (đã đến ngã ba, ngã tư) thì thực hiện rẽ
-    if (prepare_to_turn && road.lane_area > 16000) {
-        prepare_to_turn = false;
-        std::cout << "TURNING " << last_sign_id << std::endl;
-
-        if (last_sign_id == 5) {
-            turning_coeff = -50;
-        } else if (last_sign_id == 6) {
-            turning_coeff = +50;
-        }
-        
-        speed_data = 10;
-        turning_time_point = std::chrono::system_clock::now();
-        is_turning = true;
-    }
-
-
-
-    std::cout << "turning_coeff: " << turning_coeff << std::endl;
-
-    if (Timer::calcTimePassed(turning_time_point) > 1000) {
-        turning_coeff = 0;
-        speed_data = 50;
-        is_turning = false;
-    }
-
     angle_data += obstacle_avoid_coeff + turning_coeff;
 
     if (turning_coeff != 0) {
@@ -192,16 +192,20 @@ void CarControl::driverCar(Road & road, const std::vector<TrafficSign> & traffic
 
     std::cout << "lane_area: " << road.lane_area << std::endl;
     
-    // ADJUST TO FIT MAX VALUES
+
+
+    // STEP 6: FINAL ADJUSTMENT AND PUBLISH
+
+    // Fit to value ranges
     if (angle_data > MAX_ANGLE) angle_data = MAX_ANGLE;
     if (angle_data < -MAX_ANGLE) angle_data = -MAX_ANGLE;
+    if (speed_data > MAX_SPEED) speed_data = MAX_SPEED;
 
-    // PUBLISH MESSAGE
+    // Publish message
     if (debug_flag) {
         std::cout << "SPEED: " << speed_data << std::endl;
         std::cout << "ANGLE: " << angle_data << std::endl;
     }
-    
 
     std_msgs::Float32 angle;
     std_msgs::Float32 speed;

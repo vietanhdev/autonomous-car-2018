@@ -6,9 +6,11 @@
 
 #include "timer.h"
 #include "road.h"
-#include "car_control.h"
 #include "lane_detector.h"
+#include "obstacle_detector.h"
 #include "traffic_sign.h"
+#include "traffic_sign_detector.h"
+#include "car_control.h"
 
 #define TEAM "Team1"
 #define SHOW_ORIGIN_IMAGE true
