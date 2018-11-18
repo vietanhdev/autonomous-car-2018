@@ -7,18 +7,6 @@
 #include <string>
 #include "yaml-cpp/yaml.h"
 
-class ConfigItem {
-
-    public:
-
-    std::string key;
-    std::string value;
-    ConfigItem(std::string key, std::string value) {
-        this->key = key;
-        this->value = value;
-    }
-
-};
 
 class Config {
 
@@ -44,6 +32,11 @@ class Config {
         config = YAML::LoadFile(path);
 
     }
+
+    // Copy constructor 
+    Config(const Config &c) {
+        config = YAML::Clone(config);
+    } 
 
     static const std::string& getROSPackage() {
         static std::string ROS_PACKAGE("ict60_racecar");
