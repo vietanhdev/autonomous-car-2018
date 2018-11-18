@@ -1,0 +1,6 @@
+cmake_minimum_required(VERSION 2.6)
+project( run )
+find_package( OpenCV REQUIRED )
+include_directories(include)
+add_executable( run  src/main.cpp src/traffic_sign.cpp src/traffic_sign_detector.cpp src/timer.cpp)
+target_link_libraries( run ${OpenCV_LIBS} )
