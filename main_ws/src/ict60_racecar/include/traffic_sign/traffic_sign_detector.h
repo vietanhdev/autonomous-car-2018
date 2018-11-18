@@ -1,11 +1,13 @@
 #ifndef TRAFFIC_SIGN_DETECTOR_H
 #define TRAFFIC_SIGN_DETECTOR_H
 
-#include <ros/package.h>
 #include <opencv2/opencv.hpp>
 #include <opencv2/core/core.hpp>
 #include <opencv2/highgui/highgui.hpp>
 #include <opencv2/ml/ml.hpp>
+#include <opencv2/imgproc/imgproc.hpp>
+#include <opencv2/objdetect.hpp>
+
 #include <iostream>
 #include <fstream>
 #include <string>
