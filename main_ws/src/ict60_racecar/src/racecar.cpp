@@ -77,7 +77,7 @@ int main(int argc, char **argv)
     lane_detector = std::shared_ptr<LaneDetector>(new LaneDetector());
     sign_detector = std::shared_ptr<TrafficSignDetector>(new TrafficSignDetector());
     
-    if (!use_traffic_sign_detector_2) {
+    if (use_traffic_sign_detector_2) {
         sign_detector_2 = std::shared_ptr<TrafficSignDetector2>(new TrafficSignDetector2());
     }
     
