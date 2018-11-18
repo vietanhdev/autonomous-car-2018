@@ -15,17 +15,16 @@
 #include "traffic_sign_detector_2.h"
 #include "car_control.h"
 
-
-#define SHOW_ORIGIN_IMAGE true
-#define DEBUG_FIND_LANES true
-#define DEBUG_CAR_CONTROL true
-
 using namespace std;
 using namespace cv;
+
+bool show_origin_image;
+bool use_traffic_sign_detector_2 = false;
 
 std::shared_ptr<CarControl> car;
 std::shared_ptr<LaneDetector> lane_detector;
 std::shared_ptr<TrafficSignDetector> sign_detector;
+std::shared_ptr<TrafficSignDetector2> sign_detector_2;
 Road road;
 
 // To calculate the speed of image transporting
@@ -41,15 +40,21 @@ void imageCallback(const sensor_msgs::ImageConstPtr& msg)
     {
         cv_ptr = cv_bridge::toCvCopy(msg, sensor_msgs::image_encodings::BGR8);
         
-        if (SHOW_ORIGIN_IMAGE) {
+        if (show_origin_image) {
             cv::imshow("View", cv_ptr->image);
             cv::waitKey(1);
         }
         
 
         std::vector<TrafficSign> traffic_signs;
-        sign_detector->recognize(cv_ptr->image, traffic_signs);
         lane_detector->findLanes(cv_ptr->image, road);
+
+        if (!use_traffic_sign_detector_2) {
+            sign_detector->recognize(cv_ptr->image, traffic_signs);
+        } else {
+            sign_detector_2->recognize(cv_ptr->image, traffic_signs);
+        }
+
         car->driverCar(road, traffic_signs);
 
     }
@@ -71,13 +76,18 @@ int main(int argc, char **argv)
     ros::init(argc, argv, "image_listener");
     lane_detector = std::shared_ptr<LaneDetector>(new LaneDetector());
     sign_detector = std::shared_ptr<TrafficSignDetector>(new TrafficSignDetector());
+    sign_detector_2 = std::shared_ptr<TrafficSignDetector2>(new TrafficSignDetector2());
     car = std::shared_ptr<CarControl>(new CarControl());
 
     Config config;
 
     // SET DEBUG OPTIONS
-    lane_detector->debug_flag = DEBUG_FIND_LANES;
-    car->debug_flag = DEBUG_CAR_CONTROL;
+    use_traffic_sign_detector_2 = config.get<bool>("use_traffic_sign_detector_2");
+    show_origin_image = config.get<bool>("debug_show_origin_image");
+    lane_detector->debug_flag = config.get<bool>("debug_lane_detector");
+    car->debug_flag = config.get<bool>("debug_car_control");
+    sign_detector->debug_flag = config.get<bool>("debug_sign_detector");
+    sign_detector_2->debug_flag = config.get<bool>("debug_sign_detector");
 
     cv::startWindowThread();
 

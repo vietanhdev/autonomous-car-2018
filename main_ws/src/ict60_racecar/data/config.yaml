@@ -2,7 +2,16 @@ team_name: "Team1"
 max_speed: 60
 max_angle: 60
 
-delta_to_angle_coeff: -0.4
+# debug_flag
+debug_show_origin_image: true
+debug_lane_detector: false
+debug_car_control: false
+debug_sign_detector: false
+
+# Traffic Sign detector selection
+use_traffic_sign_detector_2: false
+
+delta_to_angle_coeff: -0.6
 # delta: difference between middle point and center point
 # angle: the angle to turn the car
 # angle: delta * delta_to_angle_coeff
@@ -11,7 +20,7 @@ middle_interested_point_pos: 0.6
 # position to find an interested point (middle point) of the lane line
 # 0.6 means that we find an interested point having y=60%ymax.
 
-min_num_of_middle_points: 10
+min_num_of_middle_points: 6
 # Minimum number of middle points found by lane detector.
 # If the number of middle points less than this value, do nothing with car controlling
 
@@ -29,8 +38,8 @@ speed_on_preparing_to_turn_trafficsign: 20
 lane_area_to_turn: 18000
 
 # The angle we use to change direction of the car when we meet a traffic sign
-turning_angle_on_trafficsign: 60
+turning_angle_on_trafficsign: 50
 
-speed_on_turning_trafficsign: 10
+speed_on_turning_trafficsign: 40
 
 turning_duration_trafficsign: 1000
