@@ -76,7 +76,11 @@ int main(int argc, char **argv)
     ros::init(argc, argv, "image_listener");
     lane_detector = std::shared_ptr<LaneDetector>(new LaneDetector());
     sign_detector = std::shared_ptr<TrafficSignDetector>(new TrafficSignDetector());
-    sign_detector_2 = std::shared_ptr<TrafficSignDetector2>(new TrafficSignDetector2());
+    
+    if (!use_traffic_sign_detector_2) {
+        sign_detector_2 = std::shared_ptr<TrafficSignDetector2>(new TrafficSignDetector2());
+    }
+    
     car = std::shared_ptr<CarControl>(new CarControl());
 
     Config config;
