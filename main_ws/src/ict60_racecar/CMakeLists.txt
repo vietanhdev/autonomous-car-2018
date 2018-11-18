@@ -23,6 +23,10 @@ catkin_package(
 include_directories(
   include
   src/yaml-cpp/include
+  include/lane_detector
+  include/obstacle_detector
+  include/traffic_sign
+  include/smart_control
   ${catkin_INCLUDE_DIRS}
 )
 
@@ -34,20 +38,22 @@ add_subdirectory(src/yaml-cpp)
 
 add_executable(racecar
   src/racecar.cpp
-  src/car_control.cpp
-  src/lane_detector.cpp
-  src/traffic_sign.cpp
-  src/traffic_sign_detector.cpp
   src/timer.cpp
-  src/PID.cpp
+  src/smart_control/car_control.cpp
+  src/smart_control/PID.cpp
+  src/lane_detector/lane_detector.cpp
+  src/traffic_sign/traffic_sign.cpp
+  src/traffic_sign/traffic_sign_detector.cpp
 )
 
 add_executable(manual_control
   src/manual_control.cpp
-  src/car_control.cpp
-  src/lane_detector.cpp
   src/timer.cpp
-  src/PID.cpp
+  src/smart_control/car_control.cpp
+  src/smart_control/PID.cpp
+  src/lane_detector/lane_detector.cpp
+  src/traffic_sign/traffic_sign.cpp
+  src/traffic_sign/traffic_sign_detector.cpp
 )
 
 add_dependencies(racecar ${catkin_EXPORTED_TARGETS})
