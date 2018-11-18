@@ -74,14 +74,6 @@ void imageCallback(const sensor_msgs::ImageConstPtr& msg)
 int main(int argc, char **argv)
 {
     ros::init(argc, argv, "image_listener");
-    lane_detector = std::shared_ptr<LaneDetector>(new LaneDetector());
-    sign_detector = std::shared_ptr<TrafficSignDetector>(new TrafficSignDetector());
-    
-    if (use_traffic_sign_detector_2) {
-        sign_detector_2 = std::shared_ptr<TrafficSignDetector2>(new TrafficSignDetector2());
-    }
-    
-    car = std::shared_ptr<CarControl>(new CarControl());
 
     Config config;
 
@@ -92,6 +84,14 @@ int main(int argc, char **argv)
     car->debug_flag = config.get<bool>("debug_car_control");
     sign_detector->debug_flag = config.get<bool>("debug_sign_detector");
     sign_detector_2->debug_flag = config.get<bool>("debug_sign_detector");
+
+    if (use_traffic_sign_detector_2) {
+        sign_detector_2 = std::shared_ptr<TrafficSignDetector2>(new TrafficSignDetector2());
+    }
+
+    lane_detector = std::shared_ptr<LaneDetector>(new LaneDetector());
+    sign_detector = std::shared_ptr<TrafficSignDetector>(new TrafficSignDetector());
+    car = std::shared_ptr<CarControl>(new CarControl());
 
     cv::startWindowThread();
 
