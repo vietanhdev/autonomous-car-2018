@@ -2,7 +2,7 @@
 #include "traffic_sign.h"
 #include "traffic_sign_detector.h"
 
-std::string video_path = "../../DATA/videos/outcpp.avi";
+std::string video_path = "../../../../videos/outcpp.avi";
 
 int main(int argc, char** argv){
 
