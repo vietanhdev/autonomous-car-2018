@@ -79,6 +79,32 @@ private:
     float delta_to_angle_coeff = -0.5;
     float middle_interested_point_pos = 0.6;
 
+    // Minimum number of middle points found by lane detector.
+    // If the number of middle points less than this value, do nothing with car controlling
+    int min_num_of_middle_points = 10;
+
+    // Minimum area of traffic sign rectangle boundary
+    int min_traffic_sign_bound_area = 1000;
+
+    // Valid duration for traffic sign recognition
+    int traffic_sign_valid_duration = 3000;
+
+    // Speed when preparing to turn (because of the apearance of a traffic sign)
+    float speed_on_preparing_to_turn_trafficsign = 30;
+
+    // Using lane area as a signal to turn
+    // If the lane > this value, change the direction of the car
+    int lane_area_to_turn = 18000;
+
+    // The angle we use to change direction of the car when we meet a traffic sign
+    float turning_angle_on_trafficsign = 50;
+
+    float speed_on_turning_trafficsign = 10;
+
+    Timer::time_duration_t turning_duration_trafficsign = 1000;
+
+
+
     void readConfig();
 
 };

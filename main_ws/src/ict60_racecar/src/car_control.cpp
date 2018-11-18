@@ -33,6 +33,14 @@ void CarControl::readConfig() {
     MAX_ANGLE = config.get<float>("max_angle");
     delta_to_angle_coeff = config.get<float>("delta_to_angle_coeff");
     middle_interested_point_pos = config.get<float>("middle_interested_point_pos");
+    min_num_of_middle_points = config.get<int>("min_num_of_middle_points");
+    min_traffic_sign_bound_area = config.get<int>("min_traffic_sign_bound_area");
+    traffic_sign_valid_duration = config.get<int>("traffic_sign_valid_duration");
+    speed_on_preparing_to_turn_trafficsign = config.get<float>("speed_on_preparing_to_turn_trafficsign");
+    lane_area_to_turn = config.get<int>("lane_area_to_turn");
+    turning_angle_on_trafficsign = config.get<float>("turning_angle_on_trafficsign");
+    speed_on_turning_trafficsign = config.get<float>("speed_on_turning_trafficsign");
+    turning_duration_trafficsign = config.get<int>("turning_duration_trafficsign");
 
 }
 
@@ -53,6 +61,10 @@ void CarControl::driverCar(Road & road, const std::vector<TrafficSign> & traffic
 
     //  STEP 1: FIND THE CAR POSITION
 
+    // Do nothing when we find a bad result from lane detector
+    if (road.middle_points.size() < 10) {
+        return;
+    }
 
     // Sort the middle points asc based on y
     std::sort(std::begin(road.middle_points), std::end(road.middle_points),
@@ -63,10 +75,6 @@ void CarControl::driverCar(Road & road, const std::vector<TrafficSign> & traffic
     // Choose an interested point (point having y = 60% ymax)
     int index_of_interested_point = static_cast<int>(road.middle_points.size() * middle_interested_point_pos);
 
-    // Do nothing when we cannot find a reasonable middle point
-    if (index_of_interested_point < 5) {
-        return;
-    }
 
     cv::Point middle_point = road.middle_points[index_of_interested_point];
     
@@ -113,8 +121,8 @@ void CarControl::driverCar(Road & road, const std::vector<TrafficSign> & traffic
 
     //  STEP 4: ADJUST CONTROLLING PARAMS USING TRAFFIC SIGN DETECTOR
     if (!traffic_signs.empty()) {
-        std::cout << "TRAFFIC SIGN DETECTED!" << std::endl;
 
+        std::cout << "TRAFFIC SIGN DETECTED!" << std::endl;
         std::cout << "Number: " << traffic_signs.size() << std::endl;
 
         for (int i = 0; i < traffic_signs.size(); ++i) {
@@ -122,7 +130,7 @@ void CarControl::driverCar(Road & road, const std::vector<TrafficSign> & traffic
         }
 
 
-        if (traffic_signs[0].rect.area() > 1000) {
+        if (traffic_signs[0].rect.area() > min_traffic_sign_bound_area) {
 
             prepare_to_turn = true;
             last_sign_id = traffic_signs[0].id;
@@ -133,23 +141,23 @@ void CarControl::driverCar(Road & road, const std::vector<TrafficSign> & traffic
 
 
     // Giảm tốc khi đến khúc cua
-    if (prepare_to_turn && Timer::calcTimePassed(last_sign_time_point) < 3000) {
-        speed_data = 30;
+    if (prepare_to_turn && Timer::calcTimePassed(last_sign_time_point) < traffic_sign_valid_duration) {
+        speed_data = speed_on_preparing_to_turn_trafficsign;
     }
 
     // Khi nhận thấy đang có tín hiệu rẽ,
     // và diện tích đường mở rộng (đã đến ngã ba, ngã tư) thì thực hiện rẽ
-    if (prepare_to_turn && road.lane_area > 18000 && Timer::calcTimePassed(last_sign_time_point) < 3000) {
+    if (prepare_to_turn && road.lane_area > lane_area_to_turn && Timer::calcTimePassed(last_sign_time_point) < traffic_sign_valid_duration) {
         prepare_to_turn = false;
         std::cout << "TURNING " << last_sign_id << std::endl;
 
         if (last_sign_id == TrafficSign::SignType::TURN_LEFT) {
-            turning_coeff = -50;
+            turning_coeff = -turning_angle_on_trafficsign;
         } else if (last_sign_id == TrafficSign::SignType::TURN_RIGHT) {
-            turning_coeff = +50;
+            turning_coeff = +turning_angle_on_trafficsign;
         }
         
-        speed_data = 10;
+        speed_data = speed_on_turning_trafficsign;
         turning_time_point = std::chrono::system_clock::now();
         is_turning = true;
     }
@@ -158,10 +166,12 @@ void CarControl::driverCar(Road & road, const std::vector<TrafficSign> & traffic
 
     std::cout << "turning_coeff: " << turning_coeff << std::endl;
 
-    if (Timer::calcTimePassed(turning_time_point) > 1000) {
+    if (Timer::calcTimePassed(turning_time_point) > turning_duration_trafficsign) {
         turning_coeff = 0;
-        speed_data = 50;
+        speed_data = MAX_SPEED;
         is_turning = false;
+    } else {
+        speed_data = speed_on_turning_trafficsign;
     }
 
 
@@ -173,17 +183,17 @@ void CarControl::driverCar(Road & road, const std::vector<TrafficSign> & traffic
     }
     
 
-    // Calculate the diff b/w current time and the last obstacle time
-    // If the time is out of obstacle avoiding range, reset obstacle_avoid_coeff
-    if (is_turning == true && Timer::calcTimePassed(obstacle_avoiding_time_point) > 1000) {
-        obstacle_avoid_coeff = 0;
-        ++success_turning_times;
-    }
+    // // Calculate the diff b/w current time and the last obstacle time
+    // // If the time is out of obstacle avoiding range, reset obstacle_avoid_coeff
+    // if (is_turning == true && Timer::calcTimePassed(obstacle_avoiding_time_point) > 1000) {
+    //     obstacle_avoid_coeff = 0;
+    //     ++success_turning_times;
+    // }
 
-    if (debug_flag) {
-        std::cout << "LAST OBSTACLE TIME: " << Timer::calcTimePassed(obstacle_avoiding_time_point) << std::endl;
-        std::cout << "OBSTACLE COEFF: " << obstacle_avoid_coeff << std::endl;
-    }
+    // if (debug_flag) {
+    //     std::cout << "LAST OBSTACLE TIME: " << Timer::calcTimePassed(obstacle_avoiding_time_point) << std::endl;
+    //     std::cout << "OBSTACLE COEFF: " << obstacle_avoid_coeff << std::endl;
+    // }
     
 
     // Find the obstacle and adjust obstacle_avoid_coeff
@@ -226,7 +236,7 @@ void CarControl::driverCar(Road & road, const std::vector<TrafficSign> & traffic
     // STEP 6: FINAL ADJUSTMENT AND PUBLISH
 
     // Filter the angle (remove small angle)
-    if (abs(angle_data) < 2) {
+    if (abs(angle_data) < 1) {
         angle_data = 0;
     }
 
