@@ -16,7 +16,7 @@
 #include "lane_detector.h"
 #include "obstacle_detector.h"
 #include "traffic_sign.h"
-#include "traffic_sign_detector.h"
+
 
 class CarControl 
 {

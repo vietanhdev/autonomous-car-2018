@@ -10,6 +10,7 @@
 #include "obstacle_detector.h"
 #include "traffic_sign.h"
 #include "traffic_sign_detector.h"
+#include "traffic_sign_detector_2.h"
 #include "car_control.h"
 
 #define ROS_PACKAGE "ict60_racecar"

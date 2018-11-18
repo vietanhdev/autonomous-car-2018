@@ -1,4 +1,4 @@
-#include "traffic_sign_detector.h"
+#include "traffic_sign_detector_2.h"
 
 using namespace cv;
 using namespace std;
