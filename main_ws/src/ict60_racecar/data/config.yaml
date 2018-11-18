@@ -1,6 +1,6 @@
 team_name: "Team1"
-max_speed: 60
-max_angle: 60
+max_speed: 50
+max_angle: 50
 
 # debug_flag
 debug_show_origin_image: true
@@ -20,18 +20,18 @@ middle_interested_point_pos: 0.6
 # position to find an interested point (middle point) of the lane line
 # 0.6 means that we find an interested point having y=60%ymax.
 
-min_num_of_middle_points: 6
+min_num_of_middle_points: 10
 # Minimum number of middle points found by lane detector.
 # If the number of middle points less than this value, do nothing with car controlling
 
 # Minimum area of traffic sign rectangle boundary
-min_traffic_sign_bound_area: 1000
+min_traffic_sign_bound_area: 800
 
 # Valid duration for traffic sign recognition
 traffic_sign_valid_duration: 3000
 
 # Speed when preparing to turn (because of the apearance of a traffic sign)
-speed_on_preparing_to_turn_trafficsign: 20
+speed_on_preparing_to_turn_trafficsign: 30
 
 # Using lane area as a signal to turn
 # If the lane > this value, change the direction of the car

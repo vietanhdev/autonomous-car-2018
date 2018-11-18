@@ -23,7 +23,6 @@ CarControl::CarControl()
     randn(KF.statePost, cv::Scalar::all(0), cv::Scalar::all(0.1));
 
 
-
 }
 
 CarControl::~CarControl() {}
@@ -62,7 +61,7 @@ void CarControl::driverCar(Road & road, const std::vector<TrafficSign> & traffic
     //  STEP 1: FIND THE CAR POSITION
 
     // Do nothing when we find a bad result from lane detector
-    if (road.middle_points.size() < 10) {
+    if (road.middle_points.size() < min_num_of_middle_points) {
         return;
     }
 
@@ -120,7 +119,7 @@ void CarControl::driverCar(Road & road, const std::vector<TrafficSign> & traffic
 
 
     //  STEP 4: ADJUST CONTROLLING PARAMS USING TRAFFIC SIGN DETECTOR
-    if (!traffic_signs.empty()) {
+    if (!traffic_signs.empty() && !is_turning) {
 
         std::cout << "TRAFFIC SIGN DETECTED!" << std::endl;
         std::cout << "Number: " << traffic_signs.size() << std::endl;
@@ -161,7 +160,6 @@ void CarControl::driverCar(Road & road, const std::vector<TrafficSign> & traffic
         turning_time_point = std::chrono::system_clock::now();
         is_turning = true;
     }
-
 
 
     std::cout << "turning_coeff: " << turning_coeff << std::endl;
