@@ -1,1 +1,9 @@
 team_name: "Team1"
+max_speed: 60
+max_angle: 60
+
+
+delta_to_angle_coeff: -0.6
+# delta: difference between middle point and center point
+# angle: the angle to turn the car
+# angle = delta * delta_to_angle_coeff

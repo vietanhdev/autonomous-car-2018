@@ -29,8 +29,8 @@ public:
 
     bool debug_flag = false;
 
-    const int MAX_SPEED = 60;
-    const int MAX_ANGLE = 60;
+    float MAX_SPEED = 60;
+    float MAX_ANGLE = 60;
 
     CarControl();
     ~CarControl();
@@ -73,8 +73,12 @@ private:
 
         return angle;
 
-    } 
+    }
 
+
+    float delta_to_angle_coeff = -0.5;
+
+    void readConfig();
 
 };
 

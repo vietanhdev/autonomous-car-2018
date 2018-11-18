@@ -4,7 +4,9 @@
 CarControl::CarControl()
 {
 
-    steer_publisher = node_obj1.advertise<std_msgs::Float32>(config.getTeamName(),10);
+    readConfig();
+
+    steer_publisher = node_obj1.advertise<std_msgs::Float32>(config.getTeamName() + "_steerAngle",10);
     speed_publisher = node_obj2.advertise<std_msgs::Float32>(config.getTeamName() + "_speed",10);
 
 
@@ -25,6 +27,13 @@ CarControl::CarControl()
 }
 
 CarControl::~CarControl() {}
+
+void CarControl::readConfig() {
+    MAX_SPEED = config.get<float>("max_speed");
+    MAX_ANGLE = config.get<float>("max_angle");
+    delta_to_angle_coeff = config.get<float>("delta_to_angle_coeff");
+}
+
 
 void CarControl::driverCar(float speed_data, float angle_data) {
     std_msgs::Float32 angle;
@@ -97,7 +106,7 @@ void CarControl::driverCar(Road & road, const std::vector<TrafficSign> & traffic
     //  STEP 3: FIND THE BASE CONTROLLING PARAMS ( BASED ON LANE LINES )
     float speed_data = MAX_SPEED;
     int delta = center_point.x - middle_point.x;
-    float angle_data = - delta * 0.6;
+    float angle_data = delta * delta_to_angle_coeff;
 
 
     //  STEP 4: ADJUST CONTROLLING PARAMS USING TRAFFIC SIGN DETECTOR

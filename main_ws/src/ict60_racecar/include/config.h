@@ -31,7 +31,7 @@ class Config {
         std::string path = ros::package::getPath(getROSPackage()) + std::string("/data/config.yaml");
 
         // Read config file
-        YAML::Node config = YAML::LoadFile(path);
+        config = YAML::LoadFile(path);
 
     }
 
