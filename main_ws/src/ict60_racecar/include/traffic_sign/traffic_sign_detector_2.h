@@ -11,6 +11,7 @@
 #include <string>
 #include <vector>
 
+#include "config.h"
 #include "traffic_sign.h"
 
 class TrafficSignDetector2 {
@@ -18,6 +19,8 @@ class TrafficSignDetector2 {
     public:
 
     bool debug_flag;
+
+    Config config;
 
     cv::Ptr<cv::ml::SVM> svm;
 

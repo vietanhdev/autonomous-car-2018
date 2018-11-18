@@ -10,6 +10,8 @@ debug_sign_detector: false
 
 # Traffic Sign detector selection
 use_traffic_sign_detector_2: false
+traffic_sign_detector_2_svmfile: "/data/svm_an_linear.xml"
+traffic_sign_detector_2_colorfile: "/data/blue.color"
 
 delta_to_angle_coeff: -0.6
 # delta: difference between middle point and center point
