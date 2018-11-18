@@ -1,153 +1,213 @@
 #include "traffic_sign_detector.h"
 
+// ==================================================
+// ********** INITIALIZE **********
+// ==================================================
+TrafficSignDetector::TrafficSignDetector(){
 
-using namespace cv;
-using namespace std;
-using namespace cv::ml;
+    debug_flag = true;
 
-TrafficSignDetector::TrafficSignDetector() {
+    std::string model_file = ros::package::getPath(config.getROSPackage()) + config.get<std::string>("traffic_sign_detector_svmfile");
+    model = cv::Algorithm::load<cv::ml::SVM>(model_file);
 
-    color_file = ros::package::getPath("ict60_racecar") + std::string("/data/blue.color");
-    svm_file = ros::package::getPath("ict60_racecar") + std::string("/data/svm_an_linear.xml");
+    low_HSV = cv::Scalar(90, 110, 110);
+    high_HSV = cv::Scalar(104, 255, 255);
 
+    size = 32;
+    eps_diff = 1.5;
 
-    cout << "color_file: " << color_file << endl;
-    cout << "svm_file: " << svm_file << endl;
+    // For filtering bouding rects, compare high with min_accepted_size, ratio = high/width
+    min_accepted_size = 15;
+    min_accepted_ratio = 0.9;
+    max_accepted_ratio = 1.5;
+
+    // Number of labeled bouding rects in previous frames is stored in 'record'
+    // If there are enough similarity labeled bouding rects in 'record', we can label the current rects as them
+    num_prev_check = 5;
+    num_certainty = 3;
 
     // Init HOG Descriptor config
     hog = cv::HOGDescriptor(
-        Size(size,size),    //winSize
-        Size(8, 8),          //blocksize
-        Size(4, 4),          //blockStride,
-        Size(8, 8),          //cellSize,
-        9,                  //nbins,
-        1,                  //derivAper,
-        -1,                 //winSigma,
-        0,                  //histogramNormType,
-        0.2,                //L2HysThresh,
-        1,                  //gamma correction,
-        64,                 //nlevels=64
-        1
-    );                 //_signedGradient = true 
+        cv::Size(size,size),    //winSize
+        cv::Size(8, 8),         //blocksize
+        cv::Size(4, 4),         //blockStride,
+        cv::Size(8, 8),         //cellSize,
+        9,                      //nbins,
+        1,                      //derivAper,
+        -1,                     //winSigma,
+        0,                      //histogramNormType,
+        0.2,                    //L2HysThresh,
+        1,                      //gamma correction,
+        64,                     //nlevels=64
+        1                       //_signedGradient = true
+    );
+};
 
-    readColorFile();
 
-    cout << "Done loading color file." << endl;
+// ==================================================
+// ********** HELPER **********
+// ==================================================
 
-    model = Algorithm::load<SVM>(svm_file);
-    cout << "Done loading detectors." << endl;
-    getSVMParams(model);
-    std::cout << "var_count = " << model->getVarCount() << endl;
-
-}
-
-// =====================================================
-// ******* HELPER ********
-// ======================================================
-
-void TrafficSignDetector::createHOG(HOGDescriptor &hog, vector<vector<float>> &HOG, vector<Mat> &cells){
-    for(int i=0; i<cells.size(); i++) {
-        vector<float> descriptors;
+void TrafficSignDetector::createHOG(cv::HOGDescriptor &hog, std::vector<std::vector<float>> &HOG, std::vector<cv::Mat> &cells){
+    for(size_t i=0; i<cells.size(); i++){
+        std::vector<float> descriptors;
         hog.compute(cells[i], descriptors);
         HOG.push_back(descriptors);
     }
 }
 
-void TrafficSignDetector::cvtVector2Matrix(vector<vector<float>> &HOG, Mat &mat){
+void TrafficSignDetector::cvtVector2Matrix(std::vector<std::vector<float>> &HOG, cv::Mat &mat){
     int descriptor_size = HOG[0].size();
 
-    for(int i=0; i<HOG.size(); i++){
-        for(int j=0; j<descriptor_size; j++){
+    for(size_t i=0; i<HOG.size(); i++){
+        for(size_t j=0; j<descriptor_size; j++){
             mat.at<float>(i, j) = HOG[i][j];
         }
     }
 }
 
 
-// =====================================================
-// ******* SVM ********
-// ======================================================
+// ==================================================
+// ********** SVM **********
+// ==================================================
 
-Ptr<SVM> TrafficSignDetector::svmInit(float C, float gamma){
-    Ptr<SVM> svm = SVM::create();
-    svm->setGamma(gamma);
-    svm->setC(C);
-    svm->setKernel(SVM::LINEAR);
-    svm->setType(SVM::C_SVC);
-
-    return svm;
-}
-
-void TrafficSignDetector::getSVMParams(SVM *svm){
-    cout << "Kernel type     : " << svm->getKernelType() << endl;
-    cout << "Type            : " << svm->getType() << endl;
-    cout << "C               : " << svm->getC() << endl;
-    cout << "Degree          : " << svm->getDegree() << endl;
-    cout << "Nu              : " << svm->getNu() << endl;
-    cout << "Gamma           : " << svm->getGamma() << endl;
-}
-
-void TrafficSignDetector::svmPredict(Ptr<SVM> svm, Mat &test_response, Mat &test_mat ){
-    svm->predict(test_mat, test_response);
+void TrafficSignDetector::svmPredict(cv::Ptr<cv::ml::SVM> svm, cv::Mat &response, cv::Mat &mat){
+    svm->predict(mat, response);
 }
 
 
-// =====================================================
-// ******* DETECT ********
-// ======================================================
+// ==================================================
+// ********** CLASSIFY **********
+// ==================================================
+
+int TrafficSignDetector::classifySVM(cv::HOGDescriptor &hog, cv::Ptr<cv::ml::SVM> &model, cv::Mat &img){
+
+	std::vector<cv::Mat> cells;
+    cvtColor(img, img, cv::COLOR_BGR2GRAY);
+	cells.push_back(img);
+
+	std::vector<std::vector<float>> HOG;
+    createHOG(hog, HOG, cells);
+
+    cv::Mat mat(HOG.size(), HOG[0].size(), CV_32FC1);
+
+    cvtVector2Matrix(HOG, mat);
+
+    cv::Mat response;
+    svmPredict(model, response, mat);
+
+    return (int)(response.at<float>(0, 0));
+}
 
 
-void TrafficSignDetector::inRangeHSV(Mat &img, Mat &bin_img, cv::Scalar low_HSV, cv::Scalar high_HSV){
-	
-	Mat img_HSV, img_threshold;
+// ==================================================
+// ********** TRAFFIC SIGN DETECTOR **********
+// ==================================================
+
+void TrafficSignDetector::BrightnessAndContrastAuto(cv::Mat src, cv::Mat &dst, bool clipHistPercent=false){
+    int histSize = 256;
+    float alpha, beta;
+    double minGray = 0, maxGray = 0;
+
+    cv::Mat gray;
+
+    cvtColor(src, gray, CV_BGR2GRAY);
+
+    if (clipHistPercent == true) {
+        // keep full available range
+        cv::minMaxLoc(gray, &minGray, &maxGray);
+    } else {
+        cv::Mat hist; //the grayscale histogram
+
+        float range[] = { 0, 256 };
+        const float* histRange = { range };
+        bool uniform = true;
+        bool accumulate = false;
+        calcHist(&gray, 1, 0, cv::Mat (), hist, 1, &histSize, &histRange, uniform, accumulate);
+
+        // calculate cumulative distribution from the histogram
+        std::vector<float> accumulator(histSize);
+        accumulator[0] = hist.at<float>(0);
+        for (int i = 1; i < histSize; i++)
+        {
+            accumulator[i] = accumulator[i - 1] + hist.at<float>(i);
+        }
+
+        // locate points that cuts at required value
+        float max = accumulator.back();
+        clipHistPercent *= (max / 100.0); //make percent as absolute
+        clipHistPercent /= 2.0; // left and right wings
+        // locate left cut
+        minGray = 0;
+        while (accumulator[minGray] < clipHistPercent)
+            minGray++;
+
+        // locate right cut
+        maxGray = histSize - 1;
+        while (accumulator[maxGray] >= (max - clipHistPercent))
+            maxGray--;
+    }
+
+    float input_range = maxGray - minGray;
+    float output_range = 255;
+    alpha = output_range/input_range;
+
+    beta = -minGray * alpha;
+
+    src.convertTo(dst, -1, alpha, beta);
+}
+
+void TrafficSignDetector::inRangeHSV(cv::Mat &bin_img){
+	cv::Mat img_HSV, img_threshold;
 
 	// Convert color from BGR to HSV color space
-	cvtColor(img, img_HSV, COLOR_BGR2HSV);
+	cvtColor(img, img_HSV, cv::COLOR_BGR2HSV);
 
 	// Mark out all points in range, return binary image
 	inRange(img_HSV, low_HSV, high_HSV, bin_img);
+
+    if(debug_flag == true){
+        imshow("inRangeHSV", bin_img);
+        // cv::waitKey(1);
+    }
 }
 
-void TrafficSignDetector::boundRectBinImg(Mat &img, vector<Rect> &bound_rects){
+void TrafficSignDetector::boundRectBinImg(cv::Mat bin_img, std::vector<cv::Rect> &bound_rects){
 	int eps_diff = 0.01;
 
-	vector<vector<Point>> contours;
-	vector<Vec4i> hierarchy;
+	std::vector<std::vector<cv::Point>> contours;
+	std::vector<cv::Vec4i> hierarchy;
 
-	findContours(img, contours, hierarchy, RETR_TREE, CHAIN_APPROX_SIMPLE, Point(0, 0));
+	findContours(bin_img, contours, hierarchy, cv::RETR_TREE, cv::CHAIN_APPROX_SIMPLE, cv::Point(0, 0));
 
-	vector<vector<Point>> contours_poly( contours.size() );
-	Rect rect;
+	std::vector<std::vector<cv::Point>> contours_poly( contours.size() );
+	cv::Rect rect;
 
-	for(int i=0; i<contours.size(); i++){
-
+	for(size_t i=0; i<contours.size(); i++){
 		int contour_area = contourArea(contours[i]);
-		approxPolyDP(Mat(contours[i]), contours_poly[i], 3, true);
-		rect = boundingRect(Mat(contours_poly[i]));
+		approxPolyDP(contours[i], contours_poly[i], 3, true);
+		rect = boundingRect(contours_poly[i]);
 
 		bound_rects.push_back(rect);
-
 	}
 }
 
-void TrafficSignDetector::boundRectByColor(Mat &img, vector<Rect> &bound_rects, cv::Scalar low_HSV, cv::Scalar high_HSV){
+void TrafficSignDetector::boundRectByColor(std::vector<cv::Rect> &bound_rects){
 	// Apply threshold for BGR image
-	Mat bin_img;
-	inRangeHSV(img, bin_img, low_HSV, high_HSV);
-	// imshow("bin_img", bin_img);
+	cv::Mat bin_img;
+	inRangeHSV(bin_img);
 
 	// Get all bound rects
 	boundRectBinImg(bin_img, bound_rects);
 }
 
-void TrafficSignDetector::mergeRects(vector<Rect> &bound_rects){
+void TrafficSignDetector::mergeRects(std::vector<cv::Rect> &bound_rects){
 	int findIntersection;
 
 	do{
 		findIntersection = false;
 
 		for(auto it_1 = bound_rects.begin(); it_1 != bound_rects.end(); it_1++){
-
 			for(auto it_2 =it_1+1; it_2 != bound_rects.end();){
 				if( ((*it_1) & (*it_2)).area() > 0 ){
 					findIntersection = true;
@@ -157,23 +217,22 @@ void TrafficSignDetector::mergeRects(vector<Rect> &bound_rects){
 					it_2++;
 				}
 			}
-
 		}
 	} while(findIntersection == true);
 }
 
-void TrafficSignDetector::extendRect(Rect &rect, int extend_dist, int limit_br_x, int limit_br_y){
+void TrafficSignDetector::extendRect(cv::Rect &rect, int extend_dist){
 	int tl_x = (rect.tl().x - extend_dist > 0) ? rect.tl().x - extend_dist : rect.tl().x;
 	int tl_y = (rect.tl().y - extend_dist > 0) ? rect.tl().y - extend_dist : rect.tl().y;
-	int br_x = (rect.br().x + extend_dist < limit_br_x) ? rect.br().x + extend_dist : rect.br().x;
-	int br_y = (rect.br().y + extend_dist < limit_br_y) ? rect.br().y + extend_dist : rect.br().y;
+	int br_x = (rect.br().x + extend_dist < width) ? rect.br().x + extend_dist : rect.br().x;
+	int br_y = (rect.br().y + extend_dist < height) ? rect.br().y + extend_dist : rect.br().y;
 	rect.x = tl_x;
 	rect.y = tl_y;
 	rect.width = br_x - tl_x;
 	rect.height = br_y - tl_y;
 }
 
-bool TrafficSignDetector::checkSimilarityRect(Rect A, Rect B, float eps_diff){
+bool TrafficSignDetector::checkSimilarityRect(cv::Rect A, cv::Rect B){
 	float x = (float)(A|B).area();
 	float y = (float)A.area() + (float)B.area() - (float)(A&B).area();
 	float ratio = x / y;
@@ -183,27 +242,19 @@ bool TrafficSignDetector::checkSimilarityRect(Rect A, Rect B, float eps_diff){
 	return false;
 }
 
+void TrafficSignDetector::classifyRect(){
 
-// =====================================================
-// ******* CLASSIFY ********
-// ======================================================
-
-void TrafficSignDetector::classifyRect(Mat &img, 
-	vector<Rect> &curr_rects, vector<int> &curr_labels, 
-	vector<Rect> &prev_rects, vector<int> &prev_labels, 
-	int size, float eps_diff){
-
-	for(int i=0; i<curr_rects.size(); i++){
+	for(int i=0; i<record.curr_rects.size(); i++){
 
 		int classified = false;
 		int count = 0;
 
-		for(int j=0; j<prev_rects.size(); j++){
-			if(checkSimilarityRect(curr_rects[i], prev_rects[j], eps_diff) ==  true){
-				// found the similar classified rect in prev_rects, we classify curr rect base on prev_labels
+		for(size_t j=0; j<record.prev_rects.size(); j++){
+			if(checkSimilarityRect(record.curr_rects[i].rect, record.prev_rects[j].rect) ==  true){
+				// found the similar classified rect in prev_rects, we classify curr rect base on prev label
 				count++;
-				if(count > 2){
-					curr_labels.push_back(prev_labels[i]);
+				if(count >= num_certainty){
+					record.curr_rects[i].id = record.prev_rects[j].id;
 					classified = true;
 					break;
 				}
@@ -212,161 +263,80 @@ void TrafficSignDetector::classifyRect(Mat &img,
 
 		if(classified == false){
 			// the curr_rects is not appear in prev_rects, so we have to use classifySVM
-			Mat roi_img = img(curr_rects[i]);
-			resize(roi_img, roi_img, Size(size, size));
-			int label = classifySVM(roi_img);
-			curr_labels.push_back(label);
+			cv::Mat roi_img = img(record.curr_rects[i].rect);
+			resize(roi_img, roi_img, cv::Size(size, size));
+			int id = classifySVM(hog, model, roi_img);
+			record.curr_rects[i].id = id;
 		}
 
 	}
 }
 
-void TrafficSignDetector::trafficDetect(Mat &img,
-	vector<Rect> &curr_rects, vector<int> &curr_labels,
-	vector<Rect> &prev_rects, vector<int> &prev_labels,
-	int size, float eps_diff,
-	cv::Scalar low_HSV, cv::Scalar high_HSV){
-
-	// Detect all curr_rects by color and contour area
-    boundRectByColor(img, curr_rects, low_HSV, high_HSV);
-
-    // Merge all rects have intersection greater than 0
-    mergeRects(curr_rects);
-
-    // Merge all neighbor rects by extending their size in 4 directions, then merge again by mergeRects function
-    for(int i=0; i<curr_rects.size(); i++){
-        extendRect(curr_rects[i], 1, img.cols, img.rows);
-    }
-    mergeRects(curr_rects);
-
-    // filter curr_rects by height and width
-    for(auto it = curr_rects.begin(); it != curr_rects.end();){
-	   	float width = (*it).width;
-	    float height = (*it).height;
-	    float ratio = (float)(height/width);
-
-	    if(height < size*0.8 || ratio <=0.9 || ratio > 1.5){
-	    	curr_rects.erase(it);
-	    } else {
-	    	it++;
-	    }
-    }
-
-	classifyRect(img, 
-				curr_rects, curr_labels, 
-				prev_rects, prev_labels, 
-				size, eps_diff);
-
-	for(int i=0; i<curr_rects.size(); i++){
-		prev_rects.push_back(curr_rects[i]);
-		prev_labels.push_back(curr_labels[i]);
-	}
-}
-
-
-int TrafficSignDetector::classifySVM(Mat &img){
-    
-	vector<Mat>	cells;
-    cvtColor(img, img, COLOR_BGR2GRAY);
-	cells.push_back(img);
-
-	vector<vector<float>> HOG;
-    createHOG(hog, HOG, cells);
-
-    Mat mat(HOG.size(), HOG[0].size(), CV_32FC1);
-
-    cvtVector2Matrix(HOG, mat);
-
-    Mat response;
-    svmPredict(model, response, mat);
-
-    return (int)(response.at<float>(0, 0));
-}
-
-
-void TrafficSignDetector::recognize(const cv::Mat & input, std::vector<TrafficSign> & classification_results) {
+void TrafficSignDetector::recognize(const cv::Mat & input, std::vector<TrafficSign> &traffic_signs){
 
     cv::Mat frame = input.clone();
 
-    // Clear the result first
-    classification_results.clear();
+	// Preprocessing, auto adjust brightness and contrast image
+	BrightnessAndContrastAuto(frame, img, 1);
+    width = img.cols;
+    height = img.rows;
 
-    vector<Scalar> color{
-        Scalar(255, 0, 0),
-        Scalar(0, 255, 0),
-        Scalar(0, 0, 255),
-    };
+	// Clear old curr_rects to record new one
+	record.curr_rects.clear();
 
-    ////////// USE THIS FUNCTION IN YOUR CODE TO DETECT AND CLASSIY TRAFFIC SIGN //////////
+	std::vector<cv::Rect> bound_rects;
 
-    vector<Rect> curr_rects;
-    vector<int> curr_labels;
+	// Detect all bound_rects by color and contour area
+    boundRectByColor(bound_rects);
 
-    // I also classify base on width and height of rect, you can modify those number in this function
-    trafficDetect(frame, 
-        curr_rects, curr_labels,
-        prev_rects, prev_labels,
-        size, eps_diff,
-        color_ranges[0].begin, color_ranges[0].end);
+    // Merge all rects have intersection greater than 0
+    mergeRects(bound_rects);
 
-    // hist enque the curr_rects size
-    hist.push_back(curr_rects.size());
+    // Merge all neighbor rects by extending their size in 4 directions, then merge again by mergeRects function
+    for(size_t i=0; i<bound_rects.size(); i++){
+        extendRect(bound_rects[i], 1);
+    }
+    mergeRects(bound_rects);
 
-    // save only 5 previous frames
-    if(hist.size() > 5){
-        // "deque" prev_rects and prev_labels by delete hist[0] number of first elements
-        prev_rects.erase(prev_rects.begin(), prev_rects.begin() + hist[0]);
-        prev_labels.erase(prev_labels.begin(), prev_labels.begin() + hist[0]);
+    // Filter bound_rects by height and width
+    for(size_t i=0; i<bound_rects.size(); i++){
+    	float width = bound_rects[i].width;
+    	float height = bound_rects[i].height;
+    	float ratio = height/width;
 
-        // deque first element in hist
-        hist.erase(hist.begin());
+    	if(height > min_accepted_size 
+            && ratio >= min_accepted_ratio && ratio < max_accepted_ratio){
+    		record.curr_rects.push_back(TrafficSign(0, bound_rects[i]));
+    	}
     }
 
-    // draw bounding rect and color based on label
-    for(int i=0; i<curr_rects.size(); i++){
-        if(curr_labels[i] != 0){
-            rectangle(frame, curr_rects[i].tl(), curr_rects[i].br(), color[curr_labels[i]], 1, 8, 0);
+	classifyRect();
 
-            classification_results.push_back(TrafficSign(curr_labels[i], curr_rects[i]));
+	if(record.count_rects.size() >= num_prev_check){
+		record.prev_rects.erase(record.prev_rects.begin(), record.prev_rects.begin() + record.count_rects[0]);
+		record.count_rects.erase(record.count_rects.begin());
+	}
+
+	for(int i=0; i<record.curr_rects.size(); i++){
+		record.prev_rects.push_back(record.curr_rects[i]);
+	}
+	record.count_rects.push_back(record.curr_rects.size());
+
+    // Return value to traffic_signs
+    traffic_signs = record.curr_rects;
+
+    if(debug_flag == true){
+        for(size_t i=0; i<traffic_signs.size(); i++){
+            if(traffic_signs[i].id != 0){
+                int x = traffic_signs[i].rect.tl().x;
+                int y = traffic_signs[i].rect.tl().y;
+                std::string text = traffic_signs[i].id == 1? "left":"right";
+                putText(img, text, cv::Point(x, y), cv::FONT_HERSHEY_PLAIN, 1.0, CV_RGB(255,0,255), 2.0);
+                std::cout << text << " at [" << x << ", " << y << "]" << std::endl;
+            }
+            rectangle(img, traffic_signs[i].rect.tl(), traffic_signs[i].rect.br(), CV_RGB(255,0,255), 1, 8, 0);
         }
+        imshow("traffic sign detection", img);
+        // cv::waitKey(1);
     }
-
-    resize(frame, frame, Size(frame.cols*2, frame.rows*2));
-    imshow("Debug Traffic Sign", frame);
-    cv::waitKey(1);
-
-}
-
-
-void TrafficSignDetector::readColorFile() {
-    // Load color file
-    std::string line;
-    std::ifstream color_file_stream (color_file);
-    if (!color_file_stream.is_open()) {
-        std::cout << "Cannot open file: " << "blue.color" << std::endl;
-        return;
-    }
-
-    color_ranges.clear();
-
-    // Skip first 5 lines (comments)
-    std::getline (color_file_stream, line);
-    std::getline (color_file_stream, line);
-    std::getline (color_file_stream, line);
-    std::getline (color_file_stream, line);
-    std::getline (color_file_stream, line);
-
-
-    // HSV color range (from Scalar(h1, s1, v1) to Scalar(h2, s2, v2))
-    double h1, s1, v1;
-    double h2, s2, v2;
-    
-    while (color_file_stream) {
-        std::getline (color_file_stream, line);
-        if (line == "" || line == "END") break;
-        std::stringstream line_stream(line);
-        line_stream >> h1 >> s1 >> v1 >> h2 >> s2 >> v2;
-        color_ranges.push_back(ColorRange(h1,s1,v1,h2,s2,v2));
-    }
-    
 }

@@ -6,12 +6,18 @@ max_angle: 50
 debug_show_origin_image: true
 debug_lane_detector: false
 debug_car_control: false
-debug_sign_detector: false
+debug_sign_detector: true
 
-# Traffic Sign detector selection
-use_traffic_sign_detector_2: false
+# Traffic Sign detector
+traffic_sign_detector_svmfile: "/data/svm_an_linear.xml"
+
+
+# Traffic Sign detector 2
+use_traffic_sign_detector_2: true
 traffic_sign_detector_2_svmfile: "/data/svm_an_linear.xml"
 traffic_sign_detector_2_colorfile: "/data/blue.color"
+
+
 
 delta_to_angle_coeff: -0.6
 # delta: difference between middle point and center point

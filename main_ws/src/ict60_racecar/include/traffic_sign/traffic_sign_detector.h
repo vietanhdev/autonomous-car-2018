@@ -1,112 +1,116 @@
 #ifndef TRAFFIC_SIGN_DETECTOR_H
 #define TRAFFIC_SIGN_DETECTOR_H
 
-#include <opencv2/opencv.hpp>
-#include <opencv2/core/core.hpp>
-#include <opencv2/highgui/highgui.hpp>
-#include <opencv2/ml/ml.hpp>
-#include <opencv2/imgproc/imgproc.hpp>
-#include <opencv2/objdetect.hpp>
 
-#include <iostream>
-#include <fstream>
+#include <ros/package.h>
 #include <string>
-#include <vector>
+#include <iostream>
+#include <sstream>
+#include <opencv2/highgui.hpp>
+#include <opencv2/imgproc.hpp>
+#include <opencv2/objdetect.hpp>
+#include <opencv2/ml.hpp>
 
+#include "config.h"
 #include "traffic_sign.h"
-#include "color_range.h"
+
+typedef struct RecordStructure {
+	std::vector<TrafficSign> prev_rects;
+	std::vector<TrafficSign> curr_rects;
+	std::vector<int> count_rects;
+} Record;
 
 class TrafficSignDetector {
+    private:
+
+        Config config;
+
+        cv::Mat img;
+        int width;
+        int height;
+
+        cv::Ptr<cv::ml::SVM> model;
+        cv::HOGDescriptor hog;
+
+        Record record;
+
+        cv::Scalar low_HSV;
+        cv::Scalar high_HSV;
+
+        int size;
+        float eps_diff;
+
+        int num_prev_check;
+        int num_certainty;
+
+        float min_accepted_size;
+        float min_accepted_ratio, max_accepted_ratio;
 
     public:
 
-    bool debug_flag = true;
+        bool debug_flag = true;
 
-    cv::Ptr<cv::ml::SVM> model;
+        // ==================================================
+        // ********** INITIALIZE **********
+        // ==================================================
 
-    cv::HOGDescriptor hog;
-    std::string color_file;
-    std::string svm_file;
-
-    std::vector<ColorRange> color_ranges;
-
-    int size = 32;
-
-    // use eps_diff to check similar rects of previous frame with current frame
-    // (A|B).area() / [ A + B + (A&B).area()] < eps_diff
-    float eps_diff = 1.5;
-
-    std::vector<cv::Rect> prev_rects;
-    std::vector<int> prev_labels;
-
-    // hist is a queue to save size of prev_labels
-    std::vector<int> hist;
-
-    TrafficSignDetector();
-
-    void recognize(const cv::Mat & input, std::vector<TrafficSign> & classification_results);
-
-    // =====================================================
-    // ******* HELPER ********
-    // ======================================================
-
-    void createHOG(cv::HOGDescriptor &hog, std::vector<std::vector<float>> &HOG, std::vector<cv::Mat> &cells);
-
-    void cvtVector2Matrix(std::vector<std::vector<float>> &HOG,cv::Mat &mat);
-
-    void readColorFile();
+        TrafficSignDetector();
 
 
-    // =====================================================
-    // ******* SVM ********
-    // ======================================================
+        // ==================================================
+        // ********** HELPER **********
+        // ==================================================
 
-    cv::Ptr<cv::ml::SVM> svmInit(float C, float gamma);
+        void createHOG(cv::HOGDescriptor &hog, std::vector<std::vector<float>> &HOG, std::vector<cv::Mat> &cells);
 
-    void getSVMParams(cv::ml::SVM *svm);
-
-    void svmPredict(cv::Ptr<cv::ml::SVM> svm,cv::Mat &test_response,cv::Mat &test_mat );
-
-    // =====================================================
-    // ******* DETECT ********
-    // ======================================================
+        void cvtVector2Matrix(std::vector<std::vector<float>> &HOG, cv::Mat &mat);
 
 
-    void inRangeHSV(cv::Mat &img,cv::Mat &bin_img, cv::Scalar low_HSV, cv::Scalar high_HSV);
-
-    void boundRectBinImg(cv::Mat &img, std::vector<cv::Rect> &bound_rects);
-
-    void boundRectByColor(cv::Mat &img, std::vector<cv::Rect> &bound_rects, cv::Scalar low_HSV, cv::Scalar high_HSV);
-
-    void mergeRects(std::vector<cv::Rect> &bound_rects);
-
-    void extendRect(cv::Rect &rect, int extend_dist, int limit_br_x, int limit_br_y);
-
-    bool checkSimilarityRect(cv::Rect A, cv::Rect B, float eps_diff);
+        // ==================================================
+        // ********** SVM **********
+        // ==================================================
+        
+        void svmPredict(cv::Ptr<cv::ml::SVM> svm, cv::Mat &response, cv::Mat &mat);
 
 
-    // =====================================================
-    // ******* CLASSIFY ********
-    // ======================================================
+        // ==================================================
+        // ********** CLASSIFY **********
+        // ==================================================
 
-    void classifyRect(cv::Mat &img,
-	std::vector<cv::Rect> &curr_rects, std::vector<int> &curr_labels, 
-	std::vector<cv::Rect> &prev_rects, std::vector<int> &prev_labels, 
-	int size, float eps_diff);
-
-    void trafficDetect(cv::Mat &img,
-	std::vector<cv::Rect> &curr_rects, std::vector<int> &curr_labels,
-	std::vector<cv::Rect> &prev_rects, std::vector<int> &prev_labels,
-	int size, float eps_diff,
-	cv::Scalar low_HSV, cv::Scalar high_HSV);
-
-    int classifySVM(cv::Mat &img);
+        int classifySVM(cv::HOGDescriptor &hog, cv::Ptr<cv::ml::SVM> &model, cv::Mat &img);
 
 
+        // ==================================================
+        // ********** TRAFFIC SIGN DETECTOR **********
+        // ==================================================
 
+        // Preprocessing, auto adjustment brightness and contrast image
+        void BrightnessAndContrastAuto(cv::Mat src, cv::Mat &dst, bool clipHistPercent);
+        
+        //  Threshold in range to get the objects with specific color
+        void inRangeHSV(cv::Mat &bin_img);
 
+        // Create bounding rects contain the objects
+        void boundRectBinImg(cv::Mat bin_img, std::vector<cv::Rect> &bound_rects);
 
+        // Combine of inRangeHSV() and boundRectBinImg()
+        void boundRectByColor(std::vector<cv::Rect> &bound_rects);
+
+        // Merge all rects have intersection
+        void mergeRects(std::vector<cv::Rect> &bound_rects);
+
+        // Extend all rects 1px in 4 directions
+        void extendRect(cv::Rect &rect, int extend_dist);
+
+        // use eps_diff to check similar rects
+        // (A|B).area() / [ A + B + (A&B).area()] < eps_diff
+        bool checkSimilarityRect(cv::Rect A, cv::Rect B);
+
+        // Classify rect with training model
+        void classifyRect();
+
+        // Detect and classify traffic sign
+        void recognize(const cv::Mat & frame, std::vector<TrafficSign> &traffic_signs);
 };
-
 
 #endif
