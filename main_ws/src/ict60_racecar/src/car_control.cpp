@@ -1,11 +1,27 @@
 #include "car_control.h"
 
 
-CarControl::CarControl(std::string team)
+CarControl::CarControl()
 {
-    team_name = team;
-    steer_publisher = node_obj1.advertise<std_msgs::Float32>(team_name + "_steerAngle",10);
-    speed_publisher = node_obj2.advertise<std_msgs::Float32>(team_name + "_speed",10);
+
+    steer_publisher = node_obj1.advertise<std_msgs::Float32>(config.getTeamName(),10);
+    speed_publisher = node_obj2.advertise<std_msgs::Float32>(config.getTeamName() + "_speed",10);
+
+
+    // Init the kalman filter
+    KF = cv::KalmanFilter(2, 1, 0);
+    state = cv::Mat(2, 1, CV_32F); /* (phi, delta_phi) */
+    process_noise = cv::Mat(2, 1, CV_32F);
+    measurement = cv::Mat::zeros(1, 1, CV_32F);
+
+    setIdentity(KF.measurementMatrix);
+    setIdentity(KF.processNoiseCov, cv::Scalar::all(1e-5));
+    setIdentity(KF.measurementNoiseCov, cv::Scalar::all(1e-1));
+    setIdentity(KF.errorCovPost, cv::Scalar::all(1));
+    randn(KF.statePost, cv::Scalar::all(0), cv::Scalar::all(0.1));
+
+
+
 }
 
 CarControl::~CarControl() {}
@@ -25,6 +41,7 @@ void CarControl::driverCar(float speed_data, float angle_data) {
 void CarControl::driverCar(Road & road, const std::vector<TrafficSign> & traffic_signs) {
 
     //  STEP 1: FIND THE CAR POSITION
+
 
     // Sort the middle points asc based on y
     std::sort(std::begin(road.middle_points), std::end(road.middle_points),
@@ -80,7 +97,7 @@ void CarControl::driverCar(Road & road, const std::vector<TrafficSign> & traffic
     //  STEP 3: FIND THE BASE CONTROLLING PARAMS ( BASED ON LANE LINES )
     float speed_data = MAX_SPEED;
     int delta = center_point.x - middle_point.x;
-    float angle_data = - delta / 3;
+    float angle_data = - delta * 0.6;
 
 
     //  STEP 4: ADJUST CONTROLLING PARAMS USING TRAFFIC SIGN DETECTOR
@@ -98,19 +115,20 @@ void CarControl::driverCar(Road & road, const std::vector<TrafficSign> & traffic
 
             prepare_to_turn = true;
             last_sign_id = traffic_signs[0].id;
+            last_sign_time_point = Timer::getCurrentTime();
 
         }
     }
 
 
     // Giảm tốc khi đến khúc cua
-    if (prepare_to_turn) {
+    if (prepare_to_turn && Timer::calcTimePassed(last_sign_time_point) < 3) {
         speed_data = 30;
     }
 
     // Khi nhận thấy đang có tín hiệu rẽ,
     // và diện tích đường mở rộng (đã đến ngã ba, ngã tư) thì thực hiện rẽ
-    if (prepare_to_turn && road.lane_area > 18000) {
+    if (prepare_to_turn && road.lane_area > 18000 && Timer::calcTimePassed(last_sign_time_point) < 3) {
         prepare_to_turn = false;
         std::cout << "TURNING " << last_sign_id << std::endl;
 
@@ -195,6 +213,11 @@ void CarControl::driverCar(Road & road, const std::vector<TrafficSign> & traffic
 
 
     // STEP 6: FINAL ADJUSTMENT AND PUBLISH
+
+    // Filter the angle (remove small angle)
+    if (abs(angle_data) < 2) {
+        angle_data = 0;
+    }
 
     // Fit to value ranges
     if (angle_data > MAX_ANGLE) angle_data = MAX_ANGLE;

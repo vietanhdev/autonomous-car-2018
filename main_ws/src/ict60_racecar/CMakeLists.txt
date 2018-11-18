@@ -22,8 +22,15 @@ catkin_package(
 
 include_directories(
   include
+  src/yaml-cpp/include
   ${catkin_INCLUDE_DIRS}
 )
+
+# yaml-cpp library
+set(YAML_CPP_BUILD_TESTS OFF CACHE BOOL "disable yaml tests")
+set(YAML_CPP_BUILD_TOOLS OFF CACHE BOOL "disable yaml tools")
+set(YAML_CPP_BUILD_CONTRIB OFF CACHE BOOL "disable yaml contrib")
+add_subdirectory(src/yaml-cpp)
 
 add_executable(racecar
   src/racecar.cpp
@@ -32,6 +39,7 @@ add_executable(racecar
   src/traffic_sign.cpp
   src/traffic_sign_detector.cpp
   src/timer.cpp
+  src/PID.cpp
 )
 
 add_executable(manual_control
@@ -39,6 +47,7 @@ add_executable(manual_control
   src/car_control.cpp
   src/lane_detector.cpp
   src/timer.cpp
+  src/PID.cpp
 )
 
 add_dependencies(racecar ${catkin_EXPORTED_TARGETS})
@@ -46,12 +55,14 @@ add_dependencies(manual_control ${catkin_EXPORTED_TARGETS})
 
 target_link_libraries(
   racecar
+  yaml-cpp
   ${catkin_LIBRARIES}
   ${OpenCV_LIBS}
   ${Boost_LIBRARIES}
 )
 target_link_libraries(
   manual_control
+  yaml-cpp
   ${catkin_LIBRARIES}
   ${OpenCV_LIBS}
   ${Boost_LIBRARIES}

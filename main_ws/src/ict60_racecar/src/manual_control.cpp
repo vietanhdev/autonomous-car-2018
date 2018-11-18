@@ -112,7 +112,7 @@ int main(int argc, char **argv)
 {
     ros::init(argc, argv, "image_listener_manual_mode");
 
-    car = new CarControl("Team1");
+    car = new CarControl();
 
     ros::NodeHandle nh;
     image_transport::ImageTransport it(nh);

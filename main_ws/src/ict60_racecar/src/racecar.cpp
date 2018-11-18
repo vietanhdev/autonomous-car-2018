@@ -4,6 +4,8 @@
 #include <cv_bridge/cv_bridge.h>
 #include <opencv2/highgui/highgui.hpp>
 
+
+#include "config.h"
 #include "timer.h"
 #include "road.h"
 #include "lane_detector.h"
@@ -13,11 +15,10 @@
 #include "traffic_sign_detector_2.h"
 #include "car_control.h"
 
-#define ROS_PACKAGE "ict60_racecar"
-#define TEAM "Team1"
-#define SHOW_ORIGIN_IMAGE false
-#define DEBUG_FIND_LANES false
-#define DEBUG_CAR_CONTROL false
+
+#define SHOW_ORIGIN_IMAGE true
+#define DEBUG_FIND_LANES true
+#define DEBUG_CAR_CONTROL true
 
 using namespace std;
 using namespace cv;
@@ -70,8 +71,9 @@ int main(int argc, char **argv)
     ros::init(argc, argv, "image_listener");
     lane_detector = std::shared_ptr<LaneDetector>(new LaneDetector());
     sign_detector = std::shared_ptr<TrafficSignDetector>(new TrafficSignDetector());
-    car = std::shared_ptr<CarControl>(new CarControl(TEAM));
+    car = std::shared_ptr<CarControl>(new CarControl());
 
+    Config config;
 
     // SET DEBUG OPTIONS
     lane_detector->debug_flag = DEBUG_FIND_LANES;
@@ -83,7 +85,7 @@ int main(int argc, char **argv)
 
     ros::NodeHandle nh;
     image_transport::ImageTransport it(nh);
-    image_transport::Subscriber sub = it.subscribe(std::string(TEAM)+"_image", 1, imageCallback);
+    image_transport::Subscriber sub = it.subscribe(config.getTeamName()+"_image", 1, imageCallback);
 
     ros::spin();
 
