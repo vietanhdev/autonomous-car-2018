@@ -44,7 +44,6 @@ add_executable(racecar
   src/lane_detector/lane_detector.cpp
   src/traffic_sign/traffic_sign.cpp
   src/traffic_sign/traffic_sign_detector.cpp
-  src/traffic_sign/traffic_sign_detector_2.cpp
 )
 
 add_executable(manual_control
@@ -55,7 +54,6 @@ add_executable(manual_control
   src/lane_detector/lane_detector.cpp
   src/traffic_sign/traffic_sign.cpp
   src/traffic_sign/traffic_sign_detector.cpp
-  src/traffic_sign/traffic_sign_detector_2.cpp
 )
 
 add_dependencies(racecar ${catkin_EXPORTED_TARGETS})
