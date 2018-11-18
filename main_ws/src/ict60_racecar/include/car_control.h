@@ -77,6 +77,7 @@ private:
 
 
     float delta_to_angle_coeff = -0.5;
+    float middle_interested_point_pos = 0.6;
 
     void readConfig();
 

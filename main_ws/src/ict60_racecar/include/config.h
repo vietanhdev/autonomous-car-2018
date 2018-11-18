@@ -35,6 +35,16 @@ class Config {
 
     }
 
+
+    Config(std::string config_file_name) {
+
+        std::string path = ros::package::getPath(getROSPackage()) + std::string("/data/" + config_file_name);
+
+        // Read config file
+        config = YAML::LoadFile(path);
+
+    }
+
     static const std::string& getROSPackage() {
         static std::string ROS_PACKAGE("ict60_racecar");
         return ROS_PACKAGE;

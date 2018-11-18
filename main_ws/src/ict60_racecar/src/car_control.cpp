@@ -32,6 +32,8 @@ void CarControl::readConfig() {
     MAX_SPEED = config.get<float>("max_speed");
     MAX_ANGLE = config.get<float>("max_angle");
     delta_to_angle_coeff = config.get<float>("delta_to_angle_coeff");
+    middle_interested_point_pos = config.get<float>("middle_interested_point_pos");
+
 }
 
 
@@ -59,7 +61,7 @@ void CarControl::driverCar(Road & road, const std::vector<TrafficSign> & traffic
     });
 
     // Choose an interested point (point having y = 60% ymax)
-    int index_of_interested_point = road.middle_points.size() / 5 * 3;
+    int index_of_interested_point = static_cast<int>(road.middle_points.size() * middle_interested_point_pos);
 
     // Do nothing when we cannot find a reasonable middle point
     if (index_of_interested_point < 5) {

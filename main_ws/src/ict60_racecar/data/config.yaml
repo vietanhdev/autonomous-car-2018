@@ -7,3 +7,9 @@ delta_to_angle_coeff: -0.4
 # delta: difference between middle point and center point
 # angle: the angle to turn the car
 # angle = delta * delta_to_angle_coeff
+
+middle_interested_point_pos: 0.6
+# position to find an interested point (middle point) of the lane line
+# 0.6 means that we find an interested point having y=60%ymax.
+
+
