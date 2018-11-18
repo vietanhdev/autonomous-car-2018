@@ -131,13 +131,13 @@ void CarControl::driverCar(Road & road, const std::vector<TrafficSign> & traffic
 
 
     // Giảm tốc khi đến khúc cua
-    if (prepare_to_turn && Timer::calcTimePassed(last_sign_time_point) < 3) {
+    if (prepare_to_turn && Timer::calcTimePassed(last_sign_time_point) < 3000) {
         speed_data = 30;
     }
 
     // Khi nhận thấy đang có tín hiệu rẽ,
     // và diện tích đường mở rộng (đã đến ngã ba, ngã tư) thì thực hiện rẽ
-    if (prepare_to_turn && road.lane_area > 18000 && Timer::calcTimePassed(last_sign_time_point) < 3) {
+    if (prepare_to_turn && road.lane_area > 18000 && Timer::calcTimePassed(last_sign_time_point) < 3000) {
         prepare_to_turn = false;
         std::cout << "TURNING " << last_sign_id << std::endl;
 
