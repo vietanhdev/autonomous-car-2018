@@ -12,17 +12,13 @@ void LaneDetector::initConfig() {
     std::string floodfill_points_str = config.get<std::string>("lane_floodfill_points");
 
     // Extract the lane floodfill points
-    std::cout << "Reading lane_floodfill_points" << std::endl;
+    ROS_INFO_STREAM("Reading lane_floodfill_point");
     std::vector<int> numbers = Config::extractIntegers(floodfill_points_str);
     for (size_t i = 0; i < numbers.size(); ++i) {
-        std::cout << numbers[i] << " ";
+        ROS_INFO_STREAM(numbers[i] << " ");
     }
-    std::cout << std::endl;
 
-    if (numbers.empty() || numbers.size() % 2 != 0) {
-        std::cerr << "Failed on reading lane_floodfill_points from config file. Please check!" << std::endl;
-        exit(1);
-    }
+    ROS_ASSERT_MSG(!numbers.empty() && numbers.size() % 2 == 0, "Failed on reading lane_floodfill_points from config file. Config read from string: %s", floodfill_points_str.c_str());
 
     for (size_t i = 0; i < numbers.size() / 2; ++i) {
         floodfill_points.push_back(cv::Point(numbers[i], numbers[i+1]));
@@ -130,10 +126,9 @@ void LaneDetector::doCannyEdges(const cv::Mat & img, cv::Mat & mask) {
 
 int LaneDetector::getPerspectiveMatrix(const std::vector<cv::Point2f> corners_source,
                                     const std::vector<cv::Point2f> corners_trans) {
-    if (corners_source.size() != 4 || corners_trans.size() != 4) {
-        std::cout<< "error in GetPerspectiveMatrix" <<std::endl;
-        return false;
-    }//if
+
+    ROS_ASSERT_MSG(corners_source.size() == 4 && corners_trans.size() == 4, "Error in GetPerspectiveMatrix.");
+
     perspective_matrix_ = cv::getPerspectiveTransform(corners_source, corners_trans);
     inverse_perspective_matrix_ = cv::getPerspectiveTransform(corners_trans, corners_source);
     return true;

@@ -10,6 +10,7 @@ debug_show_origin_image: true
 debug_lane_detector: false
 debug_car_control: false
 debug_sign_detector: true
+debug_show_fps: false
 
 # ==== Traffic Sign detector ====
 traffic_sign_detector_svmfile: "/data/svm_an_linear.xml"

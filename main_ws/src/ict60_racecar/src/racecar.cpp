@@ -20,6 +20,7 @@ using namespace cv;
 
 bool show_origin_image;
 bool use_traffic_sign_detector_2 = false;
+bool debug_show_fps = false;
 
 std::shared_ptr<CarControl> car;
 std::shared_ptr<LaneDetector> lane_detector;
@@ -66,7 +67,8 @@ void imageCallback(const sensor_msgs::ImageConstPtr& msg)
     ++num_of_frames;
 
     double sim_speed = static_cast<double>(num_of_frames) / Timer::calcTimePassed(start_time_point) * 1000;
-    cout << "Simulation speed: " << sim_speed << endl;
+    
+    if (debug_show_fps) ROS_INFO_STREAM("Simulation speed: " << sim_speed);
 
 }
 
@@ -76,6 +78,7 @@ int main(int argc, char **argv)
     Config config;
     ros::init(argc, argv, "image_listener");
 
+    debug_show_fps = config.get<bool>("debug_show_fps");
 
     lane_detector = std::shared_ptr<LaneDetector>(new LaneDetector());
 
@@ -94,7 +97,6 @@ int main(int argc, char **argv)
     show_origin_image = config.get<bool>("debug_show_origin_image");
     lane_detector->debug_flag = config.get<bool>("debug_lane_detector");
     car->debug_flag = config.get<bool>("debug_car_control");
-    
 
 
     cv::startWindowThread();

@@ -8,8 +8,12 @@
 #include <opencv2/highgui.hpp>
 #include <opencv2/imgproc.hpp>
 
+#include <ros/ros.h>
+#include <ros/console.h>
+
 #include "config.h"
 #include "road.h"
+
 
 
 class LaneDetector {

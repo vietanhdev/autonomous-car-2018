@@ -8,6 +8,8 @@
 #include <algorithm>
 #include <string>
 #include "yaml-cpp/yaml.h"
+#include <ros/ros.h>
+#include <ros/console.h>
 
 
 class Config {
@@ -58,10 +60,7 @@ class Config {
         std::string point_str = config[key].as<std::string>();
         std::vector<int> nums =  extractIntegers(point_str);
 
-        if (nums.size() != 2) {
-            std::cerr << "Error  on reading " << key << std::endl;
-            exit(1);
-        }
+        ROS_ASSERT_MSG(nums.size() == 2, "Error  on reading %s", key.c_str());
 
         return cv::Point(nums[0], nums[1]);
     }
@@ -70,10 +69,7 @@ class Config {
         std::string size_str = config[key].as<std::string>();
         std::vector<int> nums =  extractIntegers(size_str);
 
-        if (nums.size() != 2) {
-            std::cerr << "Error  on reading " << key << std::endl;
-            exit(1);
-        }
+        ROS_ASSERT_MSG(nums.size() == 2, "Error  on reading %s", key.c_str());
 
         return cv::Size(nums[0], nums[1]);
     }
@@ -82,10 +78,7 @@ class Config {
         std::string size_str = config[key].as<std::string>();
         std::vector<int> nums =  extractIntegers(size_str);
 
-        if (nums.size() != 3) {
-            std::cerr << "Error  on reading " << key << std::endl;
-            exit(1);
-        }
+        ROS_ASSERT_MSG(nums.size() == 3, "Error  on reading %s", key.c_str());
 
         return cv::Scalar(nums[0], nums[1], nums[2]);
     }

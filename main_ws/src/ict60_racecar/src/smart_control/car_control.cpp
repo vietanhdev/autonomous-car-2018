@@ -108,9 +108,9 @@ void CarControl::driverCar(Road & road, const std::vector<TrafficSign> & traffic
     average_difference_left = total_of_difference_left / road.left_points.size();
     average_difference_right = total_of_difference_right / road.right_points.size();
 
-    std::cout << "average_difference_left: " << average_difference_left << std::endl;
-    std::cout << "average_difference_right: " << average_difference_right << std::endl;
 
+    if (debug_flag) ROS_INFO_STREAM("average_difference_left: " << average_difference_left);
+    if (debug_flag) ROS_INFO_STREAM("average_difference_right: " << average_difference_right);
 
     //  STEP 3: FIND THE BASE CONTROLLING PARAMS ( BASED ON LANE LINES )
     float speed_data = MAX_SPEED;
@@ -121,8 +121,7 @@ void CarControl::driverCar(Road & road, const std::vector<TrafficSign> & traffic
     //  STEP 4: ADJUST CONTROLLING PARAMS USING TRAFFIC SIGN DETECTOR
     if (!traffic_signs.empty() && !is_turning) {
 
-        std::cout << "TRAFFIC SIGN DETECTED!" << std::endl;
-        std::cout << "Number: " << traffic_signs.size() << std::endl;
+        if (debug_flag) ROS_INFO_STREAM("TRAFFIC SIGN DETECTED!: " << "Number: " << traffic_signs.size());
 
         for (int i = 0; i < traffic_signs.size(); ++i) {
             std::cout << traffic_signs[i].id << " : " << traffic_signs[i].rect << std::endl;
@@ -148,7 +147,7 @@ void CarControl::driverCar(Road & road, const std::vector<TrafficSign> & traffic
     // và diện tích đường mở rộng (đã đến ngã ba, ngã tư) thì thực hiện rẽ
     if (prepare_to_turn && road.lane_area > lane_area_to_turn && Timer::calcTimePassed(last_sign_time_point) < traffic_sign_valid_duration) {
         prepare_to_turn = false;
-        std::cout << "TURNING " << last_sign_id << std::endl;
+        if (debug_flag) ROS_INFO_STREAM("TURNING: " << last_sign_id);
 
         if (last_sign_id == TrafficSign::SignType::TURN_LEFT) {
             turning_coeff = -turning_angle_on_trafficsign;
@@ -162,7 +161,9 @@ void CarControl::driverCar(Road & road, const std::vector<TrafficSign> & traffic
     }
 
 
-    std::cout << "turning_coeff: " << turning_coeff << std::endl;
+    if (debug_flag) {
+        ROS_INFO_STREAM("turning_coeff: " << turning_coeff);
+    }
 
     if (Timer::calcTimePassed(turning_time_point) > turning_duration_trafficsign) {
         turning_coeff = 0;
@@ -227,8 +228,7 @@ void CarControl::driverCar(Road & road, const std::vector<TrafficSign> & traffic
         angle_data = turning_coeff;
     }
 
-    std::cout << "lane_area: " << road.lane_area << std::endl;
-    
+    if (debug_flag) ROS_INFO_STREAM("lane_area: " << road.lane_area);
 
 
     // STEP 6: FINAL ADJUSTMENT AND PUBLISH
@@ -245,8 +245,8 @@ void CarControl::driverCar(Road & road, const std::vector<TrafficSign> & traffic
 
     // Publish message
     if (debug_flag) {
-        std::cout << "SPEED: " << speed_data << std::endl;
-        std::cout << "ANGLE: " << angle_data << std::endl;
+        ROS_INFO_STREAM("SPEED: " << speed_data);
+        ROS_INFO_STREAM("ANGLE: " << angle_data);
     }
 
     std_msgs::Float32 angle;
