@@ -34,6 +34,7 @@ void CarControl::readConfig() {
     turning_angle_on_trafficsign = config.get<float>("turning_angle_on_trafficsign");
     speed_on_turning_trafficsign = config.get<float>("speed_on_turning_trafficsign");
     turning_duration_trafficsign = config.get<int>("turning_duration_trafficsign");
+    line_diff_effect_speed_coeff = config.get<float>("line_diff_effect_speed_coeff");
 
    
 }
@@ -149,7 +150,7 @@ void CarControl::driverCar(Road & road, const std::vector<TrafficSign> & traffic
 
     float angle_data = delta * delta_to_angle_coeff + line_diff * line_diff_to_angle_coeff;
 
-    speed_data -= abs(line_diff);
+    speed_data -= abs(line_diff) * line_diff_effect_speed_coeff;
 
 
     //  STEP 4: ADJUST CONTROLLING PARAMS USING TRAFFIC SIGN DETECTOR

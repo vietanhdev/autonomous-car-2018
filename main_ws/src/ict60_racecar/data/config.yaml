@@ -55,6 +55,7 @@ control_signal_publish_interval: 20
 
 
 line_diff_to_angle_coeff: -1
+line_diff_effect_speed_coeff : 1.0
 
 delta_to_angle_coeff: -0.6
 # delta: difference between middle point and center point

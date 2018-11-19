@@ -86,7 +86,9 @@ private:
 
     float delta_to_angle_coeff = -0.5;
     float middle_interested_point_pos = 0.6;
+
     float line_diff_to_angle_coeff = -1;
+    float line_diff_effect_speed_coeff = 1; // How the angle of line effects the speed
 
     // Minimum number of middle points found by lane detector.
     // If the number of middle points less than this value, do nothing with car controlling
