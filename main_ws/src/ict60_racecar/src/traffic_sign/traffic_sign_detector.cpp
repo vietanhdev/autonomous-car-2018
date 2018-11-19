@@ -6,6 +6,9 @@
 TrafficSignDetector::TrafficSignDetector(){
 
     debug_flag = true;
+    config_trafficsign = Config("config_trafficsign.yaml");
+
+    std::cout << config_trafficsign.get<std::string>("tsd_version") << std::endl;
 
     std::string model_file = ros::package::getPath(config.getROSPackage()) + config.get<std::string>("traffic_sign_detector_svmfile");
     model = cv::Algorithm::load<cv::ml::SVM>(model_file);
@@ -17,7 +20,7 @@ TrafficSignDetector::TrafficSignDetector(){
     eps_diff = 1.5;
 
     // For filtering bouding rects, compare high with min_accepted_size, ratio = high/width
-    min_accepted_size = 15;
+    min_accepted_size = 10;
     min_accepted_ratio = 0.9;
     max_accepted_ratio = 1.5;
 

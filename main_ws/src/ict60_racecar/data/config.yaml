@@ -2,20 +2,52 @@ team_name: "Team1"
 max_speed: 50
 max_angle: 50
 
-# debug_flag
+# ==== General ====
+image_size: "320 240"
+
+# ==== debug_flag ====
 debug_show_origin_image: true
-debug_lane_detector: false
+debug_lane_detector: true
 debug_car_control: false
 debug_sign_detector: true
 
-# Traffic Sign detector
+# ==== Traffic Sign detector ====
 traffic_sign_detector_svmfile: "/data/svm_an_linear.xml"
 
 
-# Traffic Sign detector 2
+# ==== Traffic Sign detector 2 ====
 use_traffic_sign_detector_2: false
 traffic_sign_detector_2_svmfile: "/data/svm_an_linear.xml"
 traffic_sign_detector_2_colorfile: "/data/blue.color"
+
+
+# ==== Lane detector configs ====
+lane_floodfill_lo_h: 4
+lane_floodfill_lo_s: 30
+lane_floodfill_lo_v: 100
+lane_floodfill_hi_h: 4
+lane_floodfill_hi_s: 30
+lane_floodfill_hi_v: 100
+
+# We have to save floodfill points using a string like this
+# We know that yaml format can support array but we want it 
+# to be as simple as possible (only key:value format).
+# NOTE: THERE SHOULD BE A SPACE IN FRONT OF ALL NUMBERS
+lane_floodfill_points: "[[ 150, 230 ],[ 160, 230 ],[ 170, 230 ]]"
+
+
+# Points for creating transformation matrices
+lane_transform_src_tl: "0 100"
+lane_transform_src_tr: "319 100"
+lane_transform_src_br: "319 239"
+lane_transform_src_bl: "0 239"
+
+lane_transform_dst_tl: "0 0"
+lane_transform_dst_tr: "319 0"
+lane_transform_dst_br: "200 150"
+lane_transform_dst_bl: "120 150"
+
+perspective_img_size: "320 150"
 
 
 

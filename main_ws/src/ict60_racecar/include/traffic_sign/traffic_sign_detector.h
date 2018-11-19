@@ -24,6 +24,7 @@ class TrafficSignDetector {
     private:
 
         Config config;
+        Config config_trafficsign;
 
         cv::Mat img;
         int width;

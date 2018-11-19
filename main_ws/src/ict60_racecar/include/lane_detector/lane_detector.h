@@ -1,12 +1,16 @@
 #ifndef LANE_DETECTOR_H
 #define LANE_DETECTOR_H
 
+#include <iostream> 
+#include <sstream> 
 #include <opencv2/opencv.hpp>
 #include <opencv2/core.hpp>
 #include <opencv2/highgui.hpp>
 #include <opencv2/imgproc.hpp>
 
+#include "config.h"
 #include "road.h"
+
 
 class LaneDetector {
 
@@ -14,7 +18,11 @@ class LaneDetector {
 
     bool debug_flag = false;
 
+    Config config;
+
     // ==== CONFIGURATION ====
+
+    cv::Size img_size;
 
     // ** Floodfill
     cv::Scalar floodfill_lo;
@@ -60,7 +68,6 @@ class LaneDetector {
     void findLaneEdges(const cv::Mat & img, Road & road);
 
     void findLanes(const cv::Mat & input, Road & road);
-
 
 };
 

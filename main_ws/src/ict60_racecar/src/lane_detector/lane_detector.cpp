@@ -1,16 +1,40 @@
 #include "lane_detector.h"
 
+
 void LaneDetector::initConfig() {
 
-    // ** Floodfill
-    // floodfill_lo = cv::Scalar(12,100,200);
-    // floodfill_hi = cv::Scalar(12,100,200);
-    floodfill_lo = cv::Scalar(4,30,100);
-    floodfill_hi = cv::Scalar(4,30,100);
+    img_size = config.getSize("image_size");
 
-    floodfill_points.push_back(cv::Point(150, 230));
-    floodfill_points.push_back(cv::Point(160, 230));
-    floodfill_points.push_back(cv::Point(170, 230));
+    // ** Floodfill
+    int lane_floodfill_lo_h = config.get<int>("lane_floodfill_lo_h");
+    int lane_floodfill_lo_s = config.get<int>("lane_floodfill_lo_s");
+    int lane_floodfill_lo_v = config.get<int>("lane_floodfill_lo_v");
+    int lane_floodfill_hi_h = config.get<int>("lane_floodfill_hi_h");
+    int lane_floodfill_hi_s = config.get<int>("lane_floodfill_hi_s");
+    int lane_floodfill_hi_v = config.get<int>("lane_floodfill_hi_v");
+    floodfill_lo = cv::Scalar(lane_floodfill_lo_h,                           lane_floodfill_lo_s,
+                    lane_floodfill_lo_v);
+    floodfill_hi = cv::Scalar(lane_floodfill_hi_h,                           lane_floodfill_hi_s,
+                    lane_floodfill_hi_v);
+
+    std::string floodfill_points_str = config.get<std::string>("lane_floodfill_points");
+
+    // Extract the lane floodfill points
+    std::cout << "Reading lane_floodfill_points" << std::endl;
+    std::vector<int> numbers = Config::extractIntegers(floodfill_points_str);
+    for (size_t i = 0; i < numbers.size(); ++i) {
+        std::cout << numbers[i] << " ";
+    }
+    std::cout << std::endl;
+
+    if (numbers.empty() || numbers.size() % 2 != 0) {
+        std::cerr << "Failed on reading lane_floodfill_points from config file. Please check!" << std::endl;
+        exit(1);
+    }
+
+    for (size_t i = 0; i < numbers.size() / 2; ++i) {
+        floodfill_points.push_back(cv::Point(numbers[i], numbers[i+1]));
+    }
 
 }
 
@@ -23,23 +47,24 @@ void LaneDetector::initPerspectiveTransform() {
 
     // The 4 points that select quadilateral on the input , from top-left in clockwise order
     // These four pts are the sides of the rect box used as input 
-    corners_source[0] =  cv::Point2f( 0, 100 );
-    corners_source[1] =  cv::Point2f( 319, 100 );
-    corners_source[2] =  cv::Point2f( 319, 239 );
-    corners_source[3] =  cv::Point2f( 0, 239 );
+    corners_source[0] =  cv::Point2f( config.getPoint("lane_transform_src_tl") );
+    corners_source[1] =  cv::Point2f( config.getPoint("lane_transform_src_tr") );
+    corners_source[2] =  cv::Point2f( config.getPoint("lane_transform_src_br") );
+    corners_source[3] =  cv::Point2f( config.getPoint("lane_transform_src_bl") );
 
 
     // The 4 points where the mapping is to be done , from top-left in clockwise order
-    corners_trans[0] =  cv::Point2f( 0, 0 );
-    corners_trans[1] =  cv::Point2f( 319, 0 );
-    corners_trans[2] =  cv::Point2f( 200, 150 );
-    corners_trans[3] =  cv::Point2f( 120, 150 );
+    corners_trans[0] =  cv::Point2f( config.getPoint("lane_transform_dst_tl") );
+    corners_trans[1] =  cv::Point2f( config.getPoint("lane_transform_dst_tr") );
+    corners_trans[2] =  cv::Point2f( config.getPoint("lane_transform_dst_br") );
+    corners_trans[3] =  cv::Point2f( config.getPoint("lane_transform_dst_bl") );
 
     getPerspectiveMatrix(corners_source, corners_trans);
 
-    perspective_img_size = cv::Size(320, 150);
+    perspective_img_size = cv::Size( config.getSize("perspective_img_size") );
 
-    cv::Mat tmp(240, 320, CV_8UC1, cv::Scalar(255));
+
+    cv::Mat tmp(img_size, CV_8UC1, cv::Scalar(255));
     perspectiveTransform(tmp, interested_area);
 
 }
@@ -49,6 +74,7 @@ LaneDetector::LaneDetector() {
 
     initConfig();
     initPerspectiveTransform();
+    
 }
 
 
