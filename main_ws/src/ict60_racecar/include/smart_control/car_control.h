@@ -29,6 +29,7 @@ public:
 
     bool debug_flag = false;
 
+    float MIN_SPEED = 15;
     float MAX_SPEED = 60;
     float MAX_ANGLE = 60;
 
@@ -85,6 +86,7 @@ private:
 
     float delta_to_angle_coeff = -0.5;
     float middle_interested_point_pos = 0.6;
+    float line_diff_to_angle_coeff = -1;
 
     // Minimum number of middle points found by lane detector.
     // If the number of middle points less than this value, do nothing with car controlling

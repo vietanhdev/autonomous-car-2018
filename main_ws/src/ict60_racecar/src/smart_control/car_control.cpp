@@ -23,7 +23,7 @@ void CarControl::readConfig() {
     MAX_ANGLE = config.get<float>("max_angle");
     signal_publish_interval = config.get<long int>("control_signal_publish_interval");
 
-
+    line_diff_to_angle_coeff = config.get<float>("line_diff_to_angle_coeff");
     delta_to_angle_coeff = config.get<float>("delta_to_angle_coeff");
     middle_interested_point_pos = config.get<float>("middle_interested_point_pos");
     min_num_of_middle_points = config.get<int>("min_num_of_middle_points");
@@ -34,6 +34,7 @@ void CarControl::readConfig() {
     turning_angle_on_trafficsign = config.get<float>("turning_angle_on_trafficsign");
     speed_on_turning_trafficsign = config.get<float>("speed_on_turning_trafficsign");
     turning_duration_trafficsign = config.get<int>("turning_duration_trafficsign");
+
    
 }
 
@@ -46,6 +47,18 @@ void CarControl::publishSignal(float speed_data, float angle_data) {
 
         angle.data = angle_data;
         speed.data = speed_data;
+
+        // Fit to value ranges
+        if (angle_data > MAX_ANGLE) angle_data = MAX_ANGLE;
+        if (angle_data < -MAX_ANGLE) angle_data = -MAX_ANGLE;
+        if (speed_data > MAX_SPEED) speed_data = MAX_SPEED;
+        if (speed_data < MIN_SPEED) speed_data = MIN_SPEED;
+
+        // Publish message
+        if (debug_flag) {
+            ROS_INFO_STREAM("SPEED: " << speed_data);
+            ROS_INFO_STREAM("ANGLE: " << angle_data);
+        }
 
         steer_publisher.publish(angle);
         speed_publisher.publish(speed);
@@ -91,36 +104,52 @@ void CarControl::driverCar(Road & road, const std::vector<TrafficSign> & traffic
 
     //  STEP 2: FIND THE "QUALITY" OF LANE DETECTION
 
-    // The total difference of x of 2 continuous point in the lane line
-    // Unit: pixel
-    double total_of_difference_left = 0;
-    double total_of_difference_right = 0;
+    // // The total difference of x of 2 continuous point in the lane line
+    // // Unit: pixel
+    // double total_of_difference_left = 0;
+    // double total_of_difference_right = 0;
 
-    // The average difference of x of 2 continuous point in the lane line
-    // Unit: pixel
-    double average_difference_left = 0;
-    double average_difference_right = 0;
+    // // The average difference of x of 2 continuous point in the lane line
+    // // Unit: pixel
+    // double average_difference_left = 0;
+    // double average_difference_right = 0;
     
 
-    for (size_t i = 1; i < road.left_points.size(); ++i) {
-        total_of_difference_left += abs(road.left_points[i].x - road.left_points[i-1].x);
-    }
-    for (size_t i = 1; i < road.right_points.size(); ++i) {
-        total_of_difference_right += abs(road.right_points[i].x - road.right_points[i-1].x);
-    }
+    // for (size_t i = 1; i < road.left_points.size(); ++i) {
+    //     total_of_difference_left += abs(road.left_points[i].x - road.left_points[i-1].x);
+    // }
+    // for (size_t i = 1; i < road.right_points.size(); ++i) {
+    //     total_of_difference_right += abs(road.right_points[i].x - road.right_points[i-1].x);
+    // }
 
-    // Calculate the average difference
-    average_difference_left = total_of_difference_left / road.left_points.size();
-    average_difference_right = total_of_difference_right / road.right_points.size();
+    // // Calculate the average difference
+    // average_difference_left = total_of_difference_left / road.left_points.size();
+    // average_difference_right = total_of_difference_right / road.right_points.size();
 
 
-    if (debug_flag) ROS_INFO_STREAM("average_difference_left: " << average_difference_left);
-    if (debug_flag) ROS_INFO_STREAM("average_difference_right: " << average_difference_right);
+    // if (debug_flag) ROS_INFO_STREAM("average_difference_left: " << average_difference_left);
+    // if (debug_flag) ROS_INFO_STREAM("average_difference_right: " << average_difference_right);
 
     //  STEP 3: FIND THE BASE CONTROLLING PARAMS ( BASED ON LANE LINES )
     float speed_data = MAX_SPEED;
-    int delta = center_point.x - middle_point.x;
-    float angle_data = delta * delta_to_angle_coeff;
+    float delta = center_point.x - middle_point.x;
+
+
+    // line_diff_to_angle_coeff
+    float line_diff = 0;
+    if (index_of_interested_point > 12) {
+        float diff1 = road.middle_points[index_of_interested_point].x -  road.middle_points[index_of_interested_point - 3].x;
+        float diff2 = road.middle_points[index_of_interested_point - 3].x -  road.middle_points[index_of_interested_point - 6].x;
+        if (abs(diff1 - diff2) < 6) {
+            line_diff = diff1;
+        }
+        std::cout << "diff1: " << diff1 << std::endl;
+        std::cout << "diff2: " << diff2 << std::endl;
+    }
+
+    float angle_data = delta * delta_to_angle_coeff + line_diff * line_diff_to_angle_coeff;
+
+    speed_data -= abs(line_diff);
 
 
     //  STEP 4: ADJUST CONTROLLING PARAMS USING TRAFFIC SIGN DETECTOR
@@ -170,12 +199,11 @@ void CarControl::driverCar(Road & road, const std::vector<TrafficSign> & traffic
         ROS_INFO_STREAM("turning_coeff: " << turning_coeff);
     }
 
-    if (Timer::calcTimePassed(turning_time_point) > turning_duration_trafficsign) {
-        turning_coeff = 0;
-        speed_data = MAX_SPEED;
-        is_turning = false;
-    } else {
+    if (is_turning) {
         speed_data = speed_on_turning_trafficsign;
+    } else if (Timer::calcTimePassed(turning_time_point) > turning_duration_trafficsign) {
+        turning_coeff = 0;
+        is_turning = false;
     }
 
 
@@ -241,17 +269,6 @@ void CarControl::driverCar(Road & road, const std::vector<TrafficSign> & traffic
     // Filter the angle (remove small angle)
     if (abs(angle_data) < 1) {
         angle_data = 0;
-    }
-
-    // Fit to value ranges
-    if (angle_data > MAX_ANGLE) angle_data = MAX_ANGLE;
-    if (angle_data < -MAX_ANGLE) angle_data = -MAX_ANGLE;
-    if (speed_data > MAX_SPEED) speed_data = MAX_SPEED;
-
-    // Publish message
-    if (debug_flag) {
-        ROS_INFO_STREAM("SPEED: " << speed_data);
-        ROS_INFO_STREAM("ANGLE: " << angle_data);
     }
 
 
