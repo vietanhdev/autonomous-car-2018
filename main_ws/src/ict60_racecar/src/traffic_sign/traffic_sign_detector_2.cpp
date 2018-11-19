@@ -261,8 +261,10 @@ void TrafficSignDetector2::recognize(cv::Mat & input, std::vector<TrafficSign> &
         rectangle(draw, detection_results[i], Scalar(0, 255, 0), 1);
     }
 
-    cv::imshow("Traffic Sign Recognition", draw);
-    cv::waitKey(1);
+    if (debug_flag) {
+        cv::imshow("Traffic Sign Recognition", draw);
+        cv::waitKey(1);
+    }
 
 
 }

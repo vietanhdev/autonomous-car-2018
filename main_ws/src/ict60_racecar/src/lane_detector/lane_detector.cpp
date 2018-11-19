@@ -6,16 +6,8 @@ void LaneDetector::initConfig() {
     img_size = config.getSize("image_size");
 
     // ** Floodfill
-    int lane_floodfill_lo_h = config.get<int>("lane_floodfill_lo_h");
-    int lane_floodfill_lo_s = config.get<int>("lane_floodfill_lo_s");
-    int lane_floodfill_lo_v = config.get<int>("lane_floodfill_lo_v");
-    int lane_floodfill_hi_h = config.get<int>("lane_floodfill_hi_h");
-    int lane_floodfill_hi_s = config.get<int>("lane_floodfill_hi_s");
-    int lane_floodfill_hi_v = config.get<int>("lane_floodfill_hi_v");
-    floodfill_lo = cv::Scalar(lane_floodfill_lo_h,                           lane_floodfill_lo_s,
-                    lane_floodfill_lo_v);
-    floodfill_hi = cv::Scalar(lane_floodfill_hi_h,                           lane_floodfill_hi_s,
-                    lane_floodfill_hi_v);
+    floodfill_lo = config.getScalar3("lane_floodfill_lo");
+    floodfill_hi = config.getScalar3("lane_floodfill_hi");
 
     std::string floodfill_points_str = config.get<std::string>("lane_floodfill_points");
 

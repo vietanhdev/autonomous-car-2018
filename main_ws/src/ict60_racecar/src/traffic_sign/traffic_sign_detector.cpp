@@ -8,26 +8,24 @@ TrafficSignDetector::TrafficSignDetector(){
     debug_flag = true;
     config_trafficsign = Config("config_trafficsign.yaml");
 
-    std::cout << config_trafficsign.get<std::string>("tsd_version") << std::endl;
-
-    std::string model_file = ros::package::getPath(config.getROSPackage()) + config.get<std::string>("traffic_sign_detector_svmfile");
+    std::string model_file = ros::package::getPath(config.getROSPackage()) + config_trafficsign.get<std::string>("traffic_sign_detector_svmfile");
     model = cv::Algorithm::load<cv::ml::SVM>(model_file);
 
-    low_HSV = cv::Scalar(90, 110, 110);
-    high_HSV = cv::Scalar(104, 255, 255);
+    low_HSV = config_trafficsign.getScalar3("low_HSV");
+    high_HSV = config_trafficsign.getScalar3("high_HSV");
 
-    size = 32;
-    eps_diff = 1.5;
+    size = config_trafficsign.get<int>("crop_size");
+    eps_diff = config_trafficsign.get<float>("eps_diff");
 
     // For filtering bouding rects, compare high with min_accepted_size, ratio = high/width
-    min_accepted_size = 10;
-    min_accepted_ratio = 0.9;
-    max_accepted_ratio = 1.5;
+    min_accepted_size = config_trafficsign.get<float>("min_accepted_size");;
+    min_accepted_ratio = config_trafficsign.get<float>("min_accepted_ratio");;
+    max_accepted_ratio = config_trafficsign.get<float>("max_accepted_ratio");;
 
     // Number of labeled bouding rects in previous frames is stored in 'record'
     // If there are enough similarity labeled bouding rects in 'record', we can label the current rects as them
-    num_prev_check = 5;
-    num_certainty = 3;
+    num_prev_check = config_trafficsign.get<int>("num_prev_check");
+    num_certainty = config_trafficsign.get<int>("num_certainty");
 
     // Init HOG Descriptor config
     hog = cv::HOGDescriptor(

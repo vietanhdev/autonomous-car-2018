@@ -78,6 +78,18 @@ class Config {
         return cv::Size(nums[0], nums[1]);
     }
 
+    cv::Scalar getScalar3(std::string key) {
+        std::string size_str = config[key].as<std::string>();
+        std::vector<int> nums =  extractIntegers(size_str);
+
+        if (nums.size() != 3) {
+            std::cerr << "Error  on reading " << key << std::endl;
+            exit(1);
+        }
+
+        return cv::Scalar(nums[0], nums[1], nums[2]);
+    }
+
     static std::vector<int> extractIntegers(std::string str)  { 
         std::stringstream ss;  
         std::vector<int> results;
