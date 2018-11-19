@@ -199,12 +199,15 @@ void CarControl::driverCar(Road & road, const std::vector<TrafficSign> & traffic
         ROS_INFO_STREAM("turning_coeff: " << turning_coeff);
     }
 
-    if (is_turning) {
-        speed_data = speed_on_turning_trafficsign;
-    } else if (Timer::calcTimePassed(turning_time_point) > turning_duration_trafficsign) {
+    if (Timer::calcTimePassed(turning_time_point) > turning_duration_trafficsign) {
         turning_coeff = 0;
         is_turning = false;
     }
+
+    if (is_turning) {
+        speed_data = speed_on_turning_trafficsign;
+    }
+    
 
 
     // STEP 5: FIND AND AVOID OBSTACLE
