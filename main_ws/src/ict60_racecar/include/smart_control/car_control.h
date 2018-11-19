@@ -37,9 +37,16 @@ public:
     void driverCar(float speed_data, float angle_data);
     void driverCar(Road & road, const std::vector<TrafficSign> & traffic_signs);
 
+
 private:
 
+    void publishSignal(float speed_data, float angle_data);
+
     Config config;
+
+    // Manage control signal publish interval
+    Timer::time_point_t last_signal_publish_time_point;
+    Timer::time_duration_t signal_publish_interval = 1;
 
 
     int obstacle_avoid_coeff = 0;

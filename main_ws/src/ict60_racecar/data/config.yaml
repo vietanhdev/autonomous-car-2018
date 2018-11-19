@@ -10,7 +10,7 @@ debug_show_origin_image: true
 debug_lane_detector: false
 debug_car_control: false
 debug_sign_detector: true
-debug_show_fps: false
+debug_show_fps: true
 
 # ==== Traffic Sign detector ====
 traffic_sign_detector_svmfile: "/data/svm_an_linear.xml"
@@ -48,6 +48,10 @@ lane_transform_dst_bl: "120 150"
 perspective_img_size: "320 150"
 
 
+# ==== Smart Control ====
+
+# Shortest time between 2 continuous times publishing controlling signal
+control_signal_publish_interval: 20
 
 delta_to_angle_coeff: -0.6
 # delta: difference between middle point and center point
