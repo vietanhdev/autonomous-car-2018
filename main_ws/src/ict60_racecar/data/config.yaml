@@ -54,7 +54,7 @@ perspective_img_size: "320 150"
 control_signal_publish_interval: 20
 
 
-line_diff_to_angle_coeff: -1
+line_diff_to_angle_coeff: -1.0
 line_diff_effect_speed_coeff : 1.0
 
 delta_to_angle_coeff: -0.6
@@ -74,7 +74,7 @@ min_num_of_middle_points: 10
 min_traffic_sign_bound_area: 800
 
 # Valid duration for traffic sign recognition
-traffic_sign_valid_duration: 3000
+traffic_sign_valid_duration: 4000
 
 # Speed when preparing to turn (because of the apearance of a traffic sign)
 speed_on_preparing_to_turn_trafficsign: 40
@@ -84,8 +84,8 @@ speed_on_preparing_to_turn_trafficsign: 40
 lane_area_to_turn: 18000
 
 # The angle we use to change direction of the car when we meet a traffic sign
-turning_angle_on_trafficsign: 50
+turning_angle_on_trafficsign: 40
 
 speed_on_turning_trafficsign: 40
 
-turning_duration_trafficsign: 1000
+turning_duration_trafficsign: 1300

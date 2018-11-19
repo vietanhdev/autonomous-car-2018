@@ -270,12 +270,6 @@ void CarControl::driverCar(Road & road, const std::vector<TrafficSign> & traffic
 
     // STEP 6: FINAL ADJUSTMENT AND PUBLISH
 
-    // Filter the angle (remove small angle)
-    if (abs(angle_data) < 1) {
-        angle_data = 0;
-    }
-
-
     publishSignal(speed_data, angle_data);
 
 }
