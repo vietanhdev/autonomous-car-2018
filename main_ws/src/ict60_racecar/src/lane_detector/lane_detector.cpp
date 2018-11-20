@@ -378,6 +378,9 @@ void LaneDetector::findLanes(const cv::Mat & input, Road & road) {
 
     perspectiveTransform(lane_mask, lane_mask);
 
+    cv::imshow("perspacesdfkskdf", lane_mask);
+    cv::waitKey(1);
+
     removeCenterLaneLine(lane_mask, lane_mask);
 
     if (debug_flag) {
