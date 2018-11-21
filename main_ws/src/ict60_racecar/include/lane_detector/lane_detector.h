@@ -34,6 +34,7 @@ class LaneDetector {
     cv::Scalar floodfill_hi;
     std::vector<cv::Point> floodfill_points;
 
+    bool use_watershed = true;
     cv::Mat watershed_static_mask;
 
 
@@ -63,7 +64,7 @@ class LaneDetector {
 
     int getPerspectiveMatrix(const std::vector<cv::Point2f> corners_source, const std::vector<cv::Point2f> corners_trans);
 
-    bool findLaneMask(const cv::Mat & img, cv::Mat & mask);
+    bool findLaneMaskFloodfill(const cv::Mat & img, cv::Mat & mask);
 
     void perspectiveTransform(const cv::Mat & src, cv::Mat & dst);
 
@@ -73,14 +74,16 @@ class LaneDetector {
 
     void findLaneEdges(const cv::Mat & img, Road & road);
 
+    void findLaneArea(const cv::Mat &birdview_floodfill, Road &road);
+
     void findLanes(const cv::Mat & input, Road & road);
 
 
     // EXPERIMENTAL
 
-    void watershedLaneSegment(const cv::Mat & input, const cv::Mat floodfill_mask, cv::Mat & watershed_mask, size_t bound_left_x, size_t bound_right_x);
-
-
+    cv::Mat watershedLaneSegment(const cv::Mat &input, const cv::Mat &birdview_floodfill);
+   
+   
     private:
     
     // SUPPPORTING FUNCTIONS
