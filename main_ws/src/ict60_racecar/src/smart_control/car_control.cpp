@@ -188,9 +188,9 @@ void CarControl::driverCar(Road & road, const std::vector<TrafficSign> & traffic
         ++num_of_crossed_trafficsign;
     }
 
-    if (num_of_crossed_trafficsign > 0) {
-        lane_area_to_turn = 17000;
-    }
+    // if (num_of_crossed_trafficsign > 0) {
+    //     lane_area_to_turn = 17000;
+    // }
 
     if (is_turning) {
         speed_data = speed_on_turning_trafficsign;
