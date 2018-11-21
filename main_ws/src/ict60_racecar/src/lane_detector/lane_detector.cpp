@@ -67,7 +67,7 @@ LaneDetector::LaneDetector() {
     initPerspectiveTransform();
 
     // Watershed experiment
-    watershed_static_mask = cv::imread("/mnt/DATA/Works/CuocDuaSo/watershed_experiment/mark_mask.png", CV_LOAD_IMAGE_GRAYSCALE);
+    watershed_static_mask = cv::imread(Config::getDataFile("watershed_mask.png"), CV_LOAD_IMAGE_GRAYSCALE);
     
 }
 

@@ -40,7 +40,12 @@ class Config {
     // Copy constructor 
     Config(const Config &c) {
         config = YAML::Clone(config);
-    } 
+    }
+
+
+    static const std::string getDataFile(const std::string & filename) {
+        return  ros::package::getPath(getROSPackage()) + std::string("/data/" + filename);
+    }
 
     static const std::string& getROSPackage() {
         static std::string ROS_PACKAGE("ict60_racecar");

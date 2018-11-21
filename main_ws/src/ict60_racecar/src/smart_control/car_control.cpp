@@ -213,37 +213,37 @@ void CarControl::driverCar(Road & road, const std::vector<TrafficSign> & traffic
     //     ++success_turning_times;
     // }
 
-    // if (debug_flag) {
-    //     std::cout << "LAST OBSTACLE TIME: " << Timer::calcTimePassed(obstacle_avoiding_time_point) << std::endl;
-    //     std::cout << "OBSTACLE COEFF: " << obstacle_avoid_coeff << std::endl;
-    // }
+    if (debug_flag) {
+        std::cout << "LAST OBSTACLE TIME: " << Timer::calcTimePassed(obstacle_avoiding_time_point) << std::endl;
+        std::cout << "OBSTACLE COEFF: " << obstacle_avoid_coeff << std::endl;
+    }
     
 
-    // Find the obstacle and adjust obstacle_avoid_coeff
-    // for (int i = road.middle_points.size()-5; i >=  10; --i) {
-    //     int diff = road.middle_points[i+3].x - road.middle_points[i].x;
-    //     int distance_to_obstacle;
+    //Find the obstacle and adjust obstacle_avoid_coeff
+    for (int i = road.middle_points.size()-5; i >=  10; --i) {
+        int diff = road.middle_points[i+3].x - road.middle_points[i].x;
+        int distance_to_obstacle;
 
-    //     if (abs(diff) > 5 and abs(diff) < 10) {
-    //         distance_to_obstacle = Road::road_center_line_x - road.middle_points[i].y;
+        if (abs(diff) > 5 and abs(diff) < 10) {
+            distance_to_obstacle = Road::road_center_line_x - road.middle_points[i].y;
             
-    //         if (debug_flag) {
-    //             std::cout << "OBSTACLE DISTANCE: " << distance_to_obstacle << std::endl;
-    //         }
+            if (debug_flag) {
+                std::cout << "OBSTACLE DISTANCE: " << distance_to_obstacle << std::endl;
+            }
 
-    //         obstacle_avoiding_time_point = std::chrono::high_resolution_clock::now();
+            obstacle_avoiding_time_point = std::chrono::high_resolution_clock::now();
         
-    //         if (diff > 0) {
-    //             obstacle_avoid_coeff = -5;
-    //             break;
-    //         } else if (diff < 0) {
-    //             obstacle_avoid_coeff = +5;
-    //             break;
-    //         }
+            if (diff > 0) {
+                obstacle_avoid_coeff = -5;
+                break;
+            } else if (diff < 0) {
+                obstacle_avoid_coeff = +5;
+                break;
+            }
         
-    //     }
+        }
 
-    // }
+    }
     
 
     angle_data += obstacle_avoid_coeff + turning_coeff;
