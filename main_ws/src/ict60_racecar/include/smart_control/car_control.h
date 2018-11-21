@@ -100,6 +100,8 @@ private:
     // Valid duration for traffic sign recognition
     int traffic_sign_valid_duration = 3000;
 
+    int num_of_crossed_trafficsign = 0;
+
     // Speed when preparing to turn (because of the apearance of a traffic sign)
     float speed_on_preparing_to_turn_trafficsign = 30;
 
@@ -115,6 +117,7 @@ private:
     Timer::time_duration_t turning_duration_trafficsign = 1000;
 
 
+    float last_speed_data, last_angle_data;
 
     void readConfig();
 

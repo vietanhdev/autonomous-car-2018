@@ -1,5 +1,7 @@
 #include "lane_detector.h"
 
+using namespace cv;
+using namespace std;
 
 void LaneDetector::initConfig() {
 
@@ -8,6 +10,7 @@ void LaneDetector::initConfig() {
     // ** Floodfill
     floodfill_lo = config.getScalar3("lane_floodfill_lo");
     floodfill_hi = config.getScalar3("lane_floodfill_hi");
+    canny_edge_before_floodfill = config.get<bool>("canny_edge_before_floodfill");
 
     std::string floodfill_points_str = config.get<std::string>("lane_floodfill_points");
 
@@ -62,6 +65,9 @@ LaneDetector::LaneDetector() {
 
     initConfig();
     initPerspectiveTransform();
+
+    // Watershed experiment
+    watershed_static_mask = cv::imread("/mnt/DATA/Works/CuocDuaSo/watershed_experiment/mark_mask.png", CV_LOAD_IMAGE_GRAYSCALE);
     
 }
 
@@ -134,6 +140,44 @@ int LaneDetector::getPerspectiveMatrix(const std::vector<cv::Point2f> corners_so
     return true;
 }//GetPerspectiveMatrix
 
+
+// Find the index of the contour that has the biggest area
+size_t LaneDetector::findLargestContourIndex( std::vector<std::vector<cv::Point> >  & contours) {
+    int largest_area=0;
+    int largest_contour_index=-1;
+
+    // iterate through each contour. 
+    for( int i = 0; i< contours.size(); i++ ) {
+        double a = contourArea( contours[i],false);  //  Find the area of contour
+        if( a > largest_area ){
+            largest_area = a;
+            largest_contour_index = i; //Store the index of largest contour
+        }
+    }
+
+    return largest_contour_index;
+}
+
+// Extract the largest contour of a grayscale image
+// Return a mask of largest contour
+cv::Mat LaneDetector::findLargestContour(const cv::Mat & input) {
+    std::vector<std::vector<cv::Point> > contours;
+    std::vector<cv::Vec4i> hierarchy;
+    findContours( input, contours, hierarchy, cv::RETR_TREE, CV_CHAIN_APPROX_SIMPLE );
+
+    cv::Mat largest_contour_mask = cv::Mat(input.rows, input.cols, CV_8UC1, cv::Scalar(0));
+    if (contours.empty()) {
+        return largest_contour_mask;
+    }
+    
+    size_t largest_contour_index = findLargestContourIndex(contours);
+
+    drawContours( largest_contour_mask, contours, largest_contour_index, cv::Scalar(255), CV_FILLED, 8, hierarchy ); // Draw the largest contour using previously stored index.
+
+    return largest_contour_mask;
+}
+
+
 bool LaneDetector::findLaneMask(const cv::Mat & img, cv::Mat & mask) {
 
     // ** do Floodfill
@@ -172,20 +216,7 @@ bool LaneDetector::findLaneMask(const cv::Mat & img, cv::Mat & mask) {
 
     mask = cv::Mat::zeros(img.rows, img.cols, CV_8UC1);
 
-    int largest_area=0;
-    int largest_contour_index=-1;
-
-    // iterate through each contour. 
-    for( int i = 0; i< contours.size(); i++ ) {
-        double a = contourArea( contours[i],false);  //  Find the area of contour
-        if( a > largest_area ){
-            largest_area = a;
-            largest_contour_index = i; //Store the index of largest contour
-        }
-    }
-
-
-    lane_area = contourArea( contours[largest_contour_index], false);
+    int largest_contour_index = findLargestContourIndex(contours);
 
     drawContours( mask, contours, largest_contour_index, cv::Scalar(255), CV_FILLED, 8, hierarchy ); // Draw the largest contour using previously stored index.
 
@@ -197,7 +228,7 @@ void LaneDetector::perspectiveTransform(const cv::Mat & src, cv::Mat & dst) {
     cv::warpPerspective(src, dst, perspective_matrix_, perspective_img_size);
 }
 
-void LaneDetector::removeCenterLaneLine(const cv::Mat & mask, cv::Mat output_mask) {
+void LaneDetector::removeCenterLaneLine(const cv::Mat & mask, cv::Mat & output_mask) {
 
     cv::Mat inner_objects = mask.clone();
     floodFill(inner_objects, cv::Point(0, perspective_img_size.height-1), cv::Scalar(255));
@@ -211,7 +242,8 @@ void LaneDetector::removeCenterLaneLine(const cv::Mat & mask, cv::Mat output_mas
                     cv::Point( dilate_size, dilate_size ) );
     dilate( inner_objects, inner_objects, dilate_element );
 
-    output_mask = (mask | inner_objects);
+    output_mask = mask.clone();
+    output_mask |= inner_objects;
 
 }
 
@@ -344,6 +376,103 @@ void LaneDetector::findLaneEdges(const cv::Mat & img, Road & road) {
 
 }
 
+void LaneDetector::watershedLaneSegment(const cv::Mat & input, const cv::Mat floodfill_mask, cv::Mat & watershed_mask, size_t bound_left_x, size_t bound_right_x) {
+    cv::Mat img = input.clone();
+
+    // Perform the distance transform algorithm
+    Mat dist;
+    distanceTransform(floodfill_mask, dist, CV_DIST_L2, 3);
+
+    // Normalize the distance image for range = {0.0, 1.0}
+    // so we can visualize and threshold it
+    normalize(dist, dist, 0, 1., NORM_MINMAX);
+
+    // Threshold to obtain the peaks
+    // This will be the markers for the foreground objects
+    threshold(dist, dist, .4, 1., CV_THRESH_BINARY);
+
+    // Dilate a bit the dist image
+    Mat kernel1 = Mat::ones(3, 3, CV_8UC1);
+    dilate(dist, dist, kernel1);
+
+    if (debug_flag) {
+        imshow("Peaks", dist);
+        waitKey(1);
+    }
+    
+
+    // Create the CV_8U version of the distance image
+    // It is needed for findContours()
+    Mat dist_8u;
+    dist.convertTo(dist_8u, CV_8U);
+
+    // Threshold to visualize
+    threshold(dist_8u, dist_8u, 0.5, 255, THRESH_BINARY);
+
+    dist_8u = findLargestContour(dist_8u);
+
+    cv::Mat marker_mask = watershed_static_mask | dist_8u;
+
+
+    // Create boundary left - right
+    rectangle(marker_mask, cv::Rect(0, 0, bound_left_x, marker_mask.rows), cv::Scalar(255), -1);
+    rectangle(marker_mask, cv::Rect(bound_right_x, 0, marker_mask.cols - bound_right_x, marker_mask.rows), cv::Scalar(255), -1);
+
+    if (debug_flag) {
+        cv::imshow("watershed mask", marker_mask);
+        cv::waitKey(1);
+    }
+    
+
+    cv::Mat gray;
+    cvtColor(img, gray, COLOR_BGR2GRAY);
+    cvtColor(gray, gray, COLOR_GRAY2BGR);
+
+    int i, j, compCount = 0;
+    vector<vector<Point> > contours;
+    vector<Vec4i> hierarchy;
+
+    findContours(marker_mask, contours, hierarchy, RETR_CCOMP, CHAIN_APPROX_SIMPLE);
+
+    if( contours.empty() )
+        return;
+
+    Mat markers(marker_mask.size(), CV_32S);
+    markers = Scalar::all(0);
+    int idx = 0;
+    for( ; idx >= 0; idx = hierarchy[idx][0], compCount++ )
+        drawContours(markers, contours, idx, Scalar::all(compCount+1), -1, 8, hierarchy, INT_MAX);
+    if( compCount == 0 )
+        return;
+
+    watershed( img, markers );
+
+    Mat wshed(markers.size(), CV_8UC3);
+    // paint the watershed image
+    int lane_index = markers.at<int>(145, 160);
+    for( i = 0; i < markers.rows; i++ )
+        for( j = 0; j < markers.cols; j++ )
+        {
+            int index = markers.at<int>(i,j);
+            if( index == -1 )
+                wshed.at<Vec3b>(i,j) = Vec3b(0,0,0);
+            else if (index != lane_index) {
+                wshed.at<Vec3b>(i,j) = Vec3b(0,0,0);
+            } else {
+                wshed.at<Vec3b>(i,j) = Vec3b(255,255,255);
+            }
+        }
+
+    cv::cvtColor(wshed, watershed_mask, COLOR_BGR2GRAY);
+
+    if (debug_flag) {
+        wshed = wshed*0.5 + gray*0.5;
+        imshow( "watershed transform", wshed );
+        cv::waitKey(1);
+    }
+}
+
+
 
 void LaneDetector::findLanes(const cv::Mat & input, Road & road) {
     
@@ -351,19 +480,21 @@ void LaneDetector::findLanes(const cv::Mat & input, Road & road) {
 
     cv::Mat lane_mask;
 
-    cv::Mat canny_edges;
-    doCannyEdges(img, canny_edges);
+    if (canny_edge_before_floodfill) {
+        cv::Mat canny_edges;
+        doCannyEdges(img, canny_edges);
 
-    cv::Mat canny_edges_bgr;
-    cv::cvtColor(canny_edges, canny_edges_bgr, cv::COLOR_GRAY2BGR);
+        cv::Mat canny_edges_bgr;
+        cv::cvtColor(canny_edges, canny_edges_bgr, cv::COLOR_GRAY2BGR);
 
-    img = img | canny_edges_bgr;
+        img = img | canny_edges_bgr;
 
-    if (debug_flag) {
-        cv::imshow("img + canny_edges", img);
-        cv::waitKey(1);
-    }  
-    
+        if (debug_flag) {
+            cv::imshow("img + canny_edges", img);
+            cv::waitKey(1);
+        }  
+    }
+
 
     bool lane_mask_result = findLaneMask(img, lane_mask);
 
@@ -378,10 +509,61 @@ void LaneDetector::findLanes(const cv::Mat & input, Road & road) {
 
     perspectiveTransform(lane_mask, lane_mask);
 
-    cv::imshow("perspacesdfkskdf", lane_mask);
-    cv::waitKey(1);
+    if (debug_flag) {
+        cv::imshow("Perspective Transform", lane_mask);
+        cv::waitKey(1);
+    }
+    
 
-    removeCenterLaneLine(lane_mask, lane_mask);
+    cv::Mat lane_mask_no_centerline;
+    removeCenterLaneLine(lane_mask, lane_mask_no_centerline);
+
+    if (debug_flag) {
+        cv::imshow("lane_mask_no_centerline", lane_mask_no_centerline);
+    cv::waitKey(1);
+    }
+    
+
+    // Calculate lane area by counting white point
+    int lane_area = 0;
+    size_t x_min = 999;
+    size_t x_max = 0;
+    for (size_t i = 0; i < lane_mask.rows; ++i) {
+        for (size_t j = 0; j < lane_mask.cols; ++j) {
+            if (j < x_min && lane_mask.at<uchar>(i, j) > 0 ) x_min = j;
+            if (j > x_max && lane_mask.at<uchar>(i, j) > 0 ) x_max = j;
+            // cout << "x_min: " << x_min << endl;
+            // cout << "x_max: " << x_max << endl;
+        }
+    }
+    for (size_t i = 0; i < lane_mask_no_centerline.rows; ++i) {
+        for (size_t j = 0; j < lane_mask_no_centerline.cols; ++j) {
+            if (lane_mask_no_centerline.at<uchar>(i, j) > 0) {
+                ++lane_area;
+            }
+        }
+    }
+    
+    road.lane_area = lane_area;
+
+    size_t lane_bound_left, lane_bound_right;
+    if (x_min > 45) {
+        lane_bound_left = x_min - 30;
+    }
+
+    cout << perspective_img_size.width << endl;
+    if (x_max < perspective_img_size.width - 45){
+        lane_bound_right = x_max + 30;
+    }
+
+    // WATERSHED
+    cv::Mat birdview_img;
+    cv::Mat watershed_result;
+    perspectiveTransform(img, birdview_img); 
+    watershedLaneSegment(birdview_img, lane_mask, watershed_result, lane_bound_left, lane_bound_right);
+
+    
+    lane_mask = watershed_result.clone();
 
     if (debug_flag) {
         cv::imshow("lane_mask > perspective transform", lane_mask);
@@ -389,23 +571,6 @@ void LaneDetector::findLanes(const cv::Mat & input, Road & road) {
     }  
 
     findLaneEdges(lane_mask, road);
-
-    
-    // Calculate lane area by counting white point
-    lane_area = 0;
-    for (size_t i = 0; i < lane_mask.rows; ++i) {
-        for (size_t j = 0; j < lane_mask.cols; ++j) {
-            if (lane_mask.at<uchar>(i, j) > 0) {
-                ++lane_area;
-            }
-        }
-    }
-    road.lane_area = lane_area;
-
-    if (debug_flag) {
-        cv::imshow("canny_edges", canny_edges);
-        cv::waitKey(1);
-    } 
 
 
 }

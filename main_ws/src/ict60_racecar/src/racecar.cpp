@@ -33,6 +33,8 @@ Road road;
 long long int num_of_frames = 0;
 Timer::time_point_t start_time_point;
 
+Mat markerMask;
+
 void imageCallback(const sensor_msgs::ImageConstPtr& msg)
 {
     cv_bridge::CvImagePtr cv_ptr;
@@ -75,6 +77,7 @@ void imageCallback(const sensor_msgs::ImageConstPtr& msg)
 
 int main(int argc, char **argv)
 {
+
     Config config;
     ros::init(argc, argv, "image_listener");
 
@@ -106,6 +109,9 @@ int main(int argc, char **argv)
     ros::NodeHandle nh;
     image_transport::ImageTransport it(nh);
     image_transport::Subscriber sub = it.subscribe(config.getTeamName()+"_image", 1, imageCallback);
+
+
+   
 
     ros::spin();
 
