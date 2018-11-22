@@ -564,15 +564,16 @@ void LaneDetector::findLanes(const cv::Mat &input, Road &road)
     // This step is for create edges between lane and other area
     // to have better floodfill result (prevent filling other parts as lane)
     // ================================================
+    cv::Mat img_canny = input.clone();
     if (canny_edge_before_floodfill)
     {
         cv::Mat canny_edges;
-        doCannyEdges(img, canny_edges);
+        doCannyEdges(img_canny, canny_edges);
 
         cv::Mat canny_edges_bgr;
         cv::cvtColor(canny_edges, canny_edges_bgr, cv::COLOR_GRAY2BGR);
 
-        img = img | canny_edges_bgr;
+        img_canny = img_canny | canny_edges_bgr;
 
         if (debug_flag)
         {
@@ -586,7 +587,7 @@ void LaneDetector::findLanes(const cv::Mat &input, Road &road)
     // Find lane mask by floodfilling
     // ================================================
     cv::Mat lane_mask_floodfill;
-    bool lane_mask_result = findLaneMaskFloodfill(img, lane_mask_floodfill);
+    bool lane_mask_result = findLaneMaskFloodfill(img_canny, lane_mask_floodfill);
 
     // TODO: FIX this
     // Dont just return
