@@ -440,7 +440,7 @@ cv::Mat LaneDetector::watershedLaneSegment(const cv::Mat &input, const cv::Mat &
     // Idea: Create 2 white rectangle on the left and on the right (which dont have any interect part with the lane area)
 
     int x_min = 999;
-    int x_max = 0;
+    int x_max = -999;
     for (int i = 0; i < floodfill_mask.rows; ++i)
     {
         for (int j = 0; j < floodfill_mask.cols; ++j)
