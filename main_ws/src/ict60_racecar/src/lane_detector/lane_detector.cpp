@@ -587,11 +587,11 @@ void LaneDetector::findLanes(const cv::Mat &input, Road &road)
     // Find lane mask by floodfilling
     // ================================================
     cv::Mat lane_mask_floodfill;
-    bool lane_mask_result = findLaneMaskFloodfill(img_canny, lane_mask_floodfill);
+    bool floodfill_result = findLaneMaskFloodfill(img_canny, lane_mask_floodfill);
 
     // TODO: FIX this
     // Dont just return
-    if (!lane_mask_result)
+    if (!floodfill_result)
         return;
 
     if (debug_flag)
