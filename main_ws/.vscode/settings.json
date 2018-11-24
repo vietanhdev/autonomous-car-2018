@@ -53,5 +53,6 @@
         "hash_map": "cpp",
         "hash_set": "cpp",
         "forward_list": "cpp"
-    }
+    },
+    "python.pythonPath": "/home/ironman/.virtualenvs/cv/bin/python3"
 }

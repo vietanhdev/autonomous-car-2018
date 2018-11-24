@@ -206,13 +206,6 @@ void CarControl::driverCar(Road & road, const std::vector<TrafficSign> & traffic
     }
     
 
-    // // Calculate the diff b/w current time and the last obstacle time
-    // // If the time is out of obstacle avoiding range, reset obstacle_avoid_coeff
-    // if (is_turning == true && Timer::calcTimePassed(obstacle_avoiding_time_point) > 1000) {
-    //     obstacle_avoid_coeff = 0;
-    //     ++success_turning_times;
-    // }
-
     if (debug_flag) {
         std::cout << "LAST OBSTACLE TIME: " << Timer::calcTimePassed(obstacle_avoiding_time_point) << std::endl;
         std::cout << "OBSTACLE COEFF: " << obstacle_avoid_coeff << std::endl;
