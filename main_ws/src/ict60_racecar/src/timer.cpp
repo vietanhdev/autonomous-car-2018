@@ -19,3 +19,8 @@ Timer::time_duration_t Timer::calcDiff(time_point_t begin, time_point_t end) {
 Timer::time_duration_t Timer::calcTimePassed(time_point_t time_point) {
     return calcDiff(time_point, getCurrentTime());
 }
+
+// Delay a duration
+void Timer::delay(time_duration_t duration) {
+    std::this_thread::sleep_for(std::chrono::milliseconds(duration));
+}

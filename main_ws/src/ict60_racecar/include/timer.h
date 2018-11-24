@@ -2,6 +2,7 @@
 #define TIMER_H
 
 #include <chrono>
+#include <thread>
 
 class Timer {
 
@@ -23,6 +24,10 @@ class Timer {
 
     // Get time passed (duration from a time point in the past to current time)
     static time_duration_t calcTimePassed(time_point_t time_point);
+
+    // Delay a duration
+    static void delay(time_duration_t duration);
+
 
 };
 
