@@ -3,3 +3,4 @@ main_ws/devel
 main_ws/catkin_workspace
 unity*
 main_ws/logfile*
+main_ws/.vscode/settings.json
