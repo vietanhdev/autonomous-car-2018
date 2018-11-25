@@ -44,7 +44,9 @@ class TrafficSignDetector {
         int num_prev_check;
         int num_certainty;
 
-        float min_accepted_size;
+        float min_area_contour, max_area_contour;
+
+        float min_accepted_size, max_accepted_size;
         float min_accepted_ratio, max_accepted_ratio;
 
     public:

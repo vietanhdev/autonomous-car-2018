@@ -17,10 +17,15 @@ TrafficSignDetector::TrafficSignDetector(){
     size = config_trafficsign.get<int>("crop_size");
     eps_diff = config_trafficsign.get<float>("eps_diff");
 
+    // For filtering contours with area
+    min_area_contour = config_trafficsign.get<float>("min_area_contour");
+    max_area_contour = config_trafficsign.get<float>("max_area_contour");
+
     // For filtering bouding rects, compare high with min_accepted_size, ratio = high/width
-    min_accepted_size = config_trafficsign.get<float>("min_accepted_size");;
-    min_accepted_ratio = config_trafficsign.get<float>("min_accepted_ratio");;
-    max_accepted_ratio = config_trafficsign.get<float>("max_accepted_ratio");;
+    min_accepted_size = config_trafficsign.get<float>("min_accepted_size");
+    max_accepted_size = config_trafficsign.get<float>("max_accepted_size");
+    min_accepted_ratio = config_trafficsign.get<float>("min_accepted_ratio");
+    max_accepted_ratio = config_trafficsign.get<float>("max_accepted_ratio");
 
     // Number of labeled bouding rects in previous frames is stored in 'record'
     // If there are enough similarity labeled bouding rects in 'record', we can label the current rects as them
@@ -166,7 +171,7 @@ void TrafficSignDetector::inRangeHSV(cv::Mat &bin_img){
 
 	// Mark out all points in range, return binary image
 	inRange(img_HSV, low_HSV, high_HSV, bin_img);
-
+    
     if(debug_flag == true){
         imshow("inRangeHSV", bin_img);
         // cv::waitKey(1);
@@ -185,11 +190,13 @@ void TrafficSignDetector::boundRectBinImg(cv::Mat bin_img, std::vector<cv::Rect>
 	cv::Rect rect;
 
 	for(size_t i=0; i<contours.size(); i++){
-		int contour_area = contourArea(contours[i]);
-		approxPolyDP(contours[i], contours_poly[i], 3, true);
-		rect = boundingRect(contours_poly[i]);
+		float contour_area = contourArea(contours[i]);
+        if(contour_area > min_area_contour && contour_area < max_area_contour){
+            approxPolyDP(contours[i], contours_poly[i], 3, true);
+            rect = boundingRect(contours_poly[i]);
 
-		bound_rects.push_back(rect);
+            bound_rects.push_back(rect);
+        }
 	}
 }
 
@@ -305,7 +312,7 @@ void TrafficSignDetector::recognize(const cv::Mat & input, std::vector<TrafficSi
     	float height = bound_rects[i].height;
     	float ratio = height/width;
 
-    	if(height > min_accepted_size 
+    	if(height > min_accepted_size && height < max_accepted_size
             && ratio >= min_accepted_ratio && ratio < max_accepted_ratio){
     		record.curr_rects.push_back(TrafficSign(0, bound_rects[i]));
     	}
@@ -333,7 +340,7 @@ void TrafficSignDetector::recognize(const cv::Mat & input, std::vector<TrafficSi
                 int y = traffic_signs[i].rect.tl().y;
                 std::string text = traffic_signs[i].id == 1? "left":"right";
                 putText(img, text, cv::Point(x, y), cv::FONT_HERSHEY_PLAIN, 1.0, CV_RGB(255,0,255), 2.0);
-                std::cout << text << " at [" << x << ", " << y << "]" << std::endl;
+                std::cout << text << " at [" << x << ", " << y << "] with area " << traffic_signs[i].rect.area() << std::endl;
             }
             rectangle(img, traffic_signs[i].rect.tl(), traffic_signs[i].rect.br(), CV_RGB(255,0,255), 1, 8, 0);
         }
