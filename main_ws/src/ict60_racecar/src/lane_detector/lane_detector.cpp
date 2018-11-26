@@ -63,6 +63,37 @@ void LaneDetector::initPerspectiveTransform()
     perspectiveTransform(tmp, interested_area);
 }
 
+// This step require interested_area created in initPerspectiveTransform() step
+cv::Mat LaneDetector::createWatershedStaticMask() {
+    cv::Mat static_mask;
+    cv::threshold(interested_area, static_mask, 0.5, 255, THRESH_BINARY_INV);
+
+    // Reduce the white area
+    for (size_t i = 0; i < static_mask.cols; ++i) {
+
+        // Skip black area
+        size_t j = 0;
+        while (j < static_mask.rows) {
+            if (static_mask.at<uchar>(j, i) == 0) {
+                ++j;
+            } else {
+                break;
+            }
+        }
+
+        size_t k = j;
+        // Remove 5 rows
+        while (k < static_mask.rows && k < j + 5) {
+            static_mask.at<uchar>(k, i) = 0;
+            ++k;
+        }
+
+    }
+
+    return static_mask;
+
+}
+
 // ** Constructor
 LaneDetector::LaneDetector()
 {
@@ -71,7 +102,13 @@ LaneDetector::LaneDetector()
     initPerspectiveTransform();
 
     // Watershed experiment
-    watershed_static_mask = cv::imread(Config::getDataFile("watershed_mask.png"), CV_LOAD_IMAGE_GRAYSCALE);
+    // This step require interested_area created in initPerspectiveTransform() step
+    watershed_static_mask = createWatershedStaticMask();
+
+    // Failback: read from file
+    // watershed_static_mask = cv::imread(Config::getDataFile("watershed_mask.png"), CV_LOAD_IMAGE_GRAYSCALE);
+
+
 }
 
 cv::Point LaneDetector::getNullPoint()

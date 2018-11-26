@@ -79,7 +79,10 @@ class LaneDetector {
     void findLanes(const cv::Mat & input, Road & road);
 
 
-    // EXPERIMENTAL
+
+    // Create static mask used in watershed step
+    // This step require interested_area created in initPerspectiveTransform() step
+    cv::Mat createWatershedStaticMask();
 
     cv::Mat watershedLaneSegment(const cv::Mat &input, const cv::Mat &birdview_floodfill);
    
