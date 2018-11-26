@@ -174,7 +174,7 @@ void TrafficSignDetector::inRangeHSV(cv::Mat &bin_img){
     
     if(debug_flag == true){
         imshow("inRangeHSV", bin_img);
-        // cv::waitKey(1);
+        cv::waitKey(1);
     }
 }
 
@@ -345,6 +345,6 @@ void TrafficSignDetector::recognize(const cv::Mat & input, std::vector<TrafficSi
             rectangle(img, traffic_signs[i].rect.tl(), traffic_signs[i].rect.br(), CV_RGB(255,0,255), 1, 8, 0);
         }
         imshow("traffic sign detection", img);
-        // cv::waitKey(1);
+        cv::waitKey(1);
     }
 }
