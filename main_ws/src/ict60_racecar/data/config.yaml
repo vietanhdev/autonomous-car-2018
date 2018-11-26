@@ -12,6 +12,7 @@ debug_car_control: false
 debug_sign_detector: true
 debug_show_fps: false
 
+
 # ==== Traffic Sign detector ====
 traffic_sign_detector_svmfile: "/data/svm_an_linear.xml"
 
@@ -24,6 +25,8 @@ traffic_sign_detector_2_colorfile: "/data/blue.color"
 
 # ==== Lane detector configs ====
 
+canny_edge_before_floodfill: true
+lane_use_watershed_segmentation: true
 lane_floodfill_lo: "4 30 100"
 lane_floodfill_hi: "4 30 100"
 
@@ -51,10 +54,10 @@ perspective_img_size: "320 150"
 # ==== Smart Control ====
 
 # Shortest time between 2 continuous times publishing controlling signal
-control_signal_publish_interval: 20
+control_signal_publish_interval: 25
 
 
-line_diff_to_angle_coeff: -1.0
+line_diff_to_angle_coeff: -0.5
 line_diff_effect_speed_coeff : 1.0
 
 delta_to_angle_coeff: -0.6
@@ -71,17 +74,17 @@ min_num_of_middle_points: 10
 # If the number of middle points less than this value, do nothing with car controlling
 
 # Minimum area of traffic sign rectangle boundary
-min_traffic_sign_bound_area: 800
+min_traffic_sign_bound_area: 900
 
 # Valid duration for traffic sign recognition
-traffic_sign_valid_duration: 4000
+traffic_sign_valid_duration: 5000
 
 # Speed when preparing to turn (because of the apearance of a traffic sign)
 speed_on_preparing_to_turn_trafficsign: 40
 
 # Using lane area as a signal to turn
 # If the lane > this value, change the direction of the car
-lane_area_to_turn: 18000
+lane_area_to_turn: 19000
 
 # The angle we use to change direction of the car when we meet a traffic sign
 turning_angle_on_trafficsign: 40

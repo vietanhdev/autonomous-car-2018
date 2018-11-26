@@ -29,11 +29,14 @@ class LaneDetector {
     cv::Size img_size;
 
     // ** Floodfill
+    bool canny_edge_before_floodfill = true;
     cv::Scalar floodfill_lo;
     cv::Scalar floodfill_hi;
     std::vector<cv::Point> floodfill_points;
 
-    int lane_area;
+    bool use_watershed = true;
+    cv::Mat watershed_static_mask;
+
 
     // ** Perspective transform
     cv::Mat perspective_matrix_;
@@ -61,17 +64,39 @@ class LaneDetector {
 
     int getPerspectiveMatrix(const std::vector<cv::Point2f> corners_source, const std::vector<cv::Point2f> corners_trans);
 
-    bool findLaneMask(const cv::Mat & img, cv::Mat & mask);
+    bool findLaneMaskFloodfill(const cv::Mat & img, cv::Mat & mask);
 
     void perspectiveTransform(const cv::Mat & src, cv::Mat & dst);
 
-    void removeCenterLaneLine(const cv::Mat & mask, cv::Mat output_mask);
+    void removeCenterLaneLine(const cv::Mat & mask, cv::Mat & output_mask);
 
     void findEdgePoints(const cv::Mat & mask, size_t row, cv::Point & left_point, cv::Point & right_point);
 
     void findLaneEdges(const cv::Mat & img, Road & road);
 
+    void findLaneArea(const cv::Mat &birdview_floodfill, Road &road);
+
     void findLanes(const cv::Mat & input, Road & road);
+
+
+
+    // Create static mask used in watershed step
+    // This step require interested_area created in initPerspectiveTransform() step
+    cv::Mat createWatershedStaticMask();
+
+    cv::Mat watershedLaneSegment(const cv::Mat &input, const cv::Mat &birdview_floodfill);
+   
+   
+    private:
+    
+    // SUPPPORTING FUNCTIONS
+    // Find the index of the contour that has the biggest area
+    size_t findLargestContourIndex( std::vector<std::vector<cv::Point> >  & contours);
+
+    // Extract the largest contour of a grayscale image
+    // Return a binary mask of largest contour
+    cv::Mat findLargestContour(const cv::Mat & input);
+
 
 };
 
