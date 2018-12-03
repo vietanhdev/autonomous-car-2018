@@ -7,7 +7,7 @@ image_size: "320 240"
 
 # ==== debug_flag ====
 debug_show_origin_image: true
-debug_lane_detector: false
+debug_lane_detector: true
 debug_car_control: false
 debug_sign_detector: true
 debug_show_fps: false
@@ -58,7 +58,7 @@ control_signal_publish_interval: 25
 
 
 line_diff_to_angle_coeff: -0.5
-line_diff_effect_speed_coeff : 1.0
+line_diff_effect_speed_coeff : 2.0
 
 delta_to_angle_coeff: -0.6
 # delta: difference between middle point and center point
@@ -80,7 +80,7 @@ min_traffic_sign_bound_area: 900
 traffic_sign_valid_duration: 5000
 
 # Speed when preparing to turn (because of the apearance of a traffic sign)
-speed_on_preparing_to_turn_trafficsign: 40
+speed_on_preparing_to_turn_trafficsign: 20
 
 # Using lane area as a signal to turn
 # If the lane > this value, change the direction of the car
