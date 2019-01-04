@@ -278,6 +278,11 @@ void LaneDetector::perspectiveTransform(const cv::Mat &src, cv::Mat &dst)
     cv::warpPerspective(src, dst, perspective_matrix_, perspective_img_size);
 }
 
+void LaneDetector::revertPerspectiveTransform(const cv::Mat &src, cv::Mat &dst)
+{
+    cv::warpPerspective(src, dst, inverse_perspective_matrix_, img_size);
+}
+
 void LaneDetector::removeCenterLaneLine(const cv::Mat &mask, cv::Mat &output_mask)
 {
 
@@ -696,4 +701,10 @@ void LaneDetector::findLanes(const cv::Mat &input, Road &road)
     // ================================================
 
     findLaneEdges(lane_mask, road);
+
+    // Xuất lane mask cho An
+    cv::Mat lane_mask_origin_view;
+    revertPerspectiveTransform(lane_mask, lane_mask_origin_view);
+    road.lane_mask = lane_mask_origin_view;
+
 }

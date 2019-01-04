@@ -68,6 +68,8 @@ class LaneDetector {
 
     void perspectiveTransform(const cv::Mat & src, cv::Mat & dst);
 
+    void revertPerspectiveTransform(const cv::Mat &src, cv::Mat &dst);
+
     void removeCenterLaneLine(const cv::Mat & mask, cv::Mat & output_mask);
 
     void findEdgePoints(const cv::Mat & mask, size_t row, cv::Point & left_point, cv::Point & right_point);

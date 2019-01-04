@@ -16,6 +16,8 @@ class Road {
 
     int lane_area;
 
+    cv::Mat lane_mask;
+
     std::vector<cv::Point> left_points;
     std::vector<cv::Point> right_points;
     std::vector<cv::Point> middle_points;

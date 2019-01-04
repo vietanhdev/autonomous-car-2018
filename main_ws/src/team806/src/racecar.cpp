@@ -149,6 +149,9 @@ void carControlThread() {
             std::lock_guard<std::mutex> guard(road_mutex);
             std::lock_guard<std::mutex> guard2(traffic_signs_mutex);
             car->driverCar(road, traffic_signs);
+
+            if (!road.lane_mask.empty())
+                imwrite("hello_world.png", road.lane_mask);
         }
 
 
