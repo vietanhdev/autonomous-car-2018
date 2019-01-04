@@ -84,7 +84,7 @@ class Config {
             if (!private_node_handle.getParam("racecar_pkg_name", racecar_pkg_name)) {
                 std::cout << "Param: " << racecar_pkg_name << std::endl;
                 ROS_INFO("Param: %s", racecar_pkg_name.c_str());
-                racecar_pkg_name = "team806_1";
+                racecar_pkg_name = "team806";
             }
             ROS_INFO("Param: %s", racecar_pkg_name.c_str());
         }

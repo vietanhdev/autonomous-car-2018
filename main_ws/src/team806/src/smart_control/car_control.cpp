@@ -38,7 +38,20 @@ void CarControl::readConfig() {
     turning_duration_trafficsign = config->get<int>("turning_duration_trafficsign");
     line_diff_effect_speed_coeff = config->get<float>("line_diff_effect_speed_coeff");
 
+
+    // # Quick start
+    // #   We assume that at the begining, the road is straight so we increase the speed as much as possible
+    quick_start = config->get<bool>("quick_start");
+    quick_start_speed = config->get<float>("quick_start_speed");
+    quick_start_time = config->get<Timer::time_duration_t>("quick_start_time");
+    
+
    
+}
+
+
+void CarControl::resetRound() {
+    round_start_time = Timer::getCurrentTime();
 }
 
 
@@ -63,11 +76,18 @@ void CarControl::publishSignal(float speed_data, float angle_data) {
             ROS_INFO_STREAM("ANGLE: " << angle_data);
         }
 
-        steer_publisher.publish(angle);
-        speed_publisher.publish(speed);
-
         last_speed_data = speed_data;
         last_angle_data = angle_data;
+
+        // Control quick start: Overwrite speed on quick start
+        if (quick_start && Timer::calcTimePassed(round_start_time) < quick_start_time) {
+            std::cout << "Time passed: " << Timer::calcTimePassed(round_start_time) << std::endl;
+            speed.data = quick_start_speed;
+            std::cout << "Quick Start" << std::endl;
+        }
+
+        steer_publisher.publish(angle);
+        speed_publisher.publish(speed);
 
         last_signal_publish_time_point = Timer::getCurrentTime();
     }

@@ -38,6 +38,9 @@ public:
     void driverCar(float speed_data, float angle_data);
     void driverCar(Road & road, const std::vector<TrafficSign> & traffic_signs);
 
+    // Reset parameter to start a new racing round
+    void resetRound();
+
 
 private:
 
@@ -82,6 +85,17 @@ private:
         return angle;
 
     }
+
+
+    // Starting time of the round
+    Timer::time_point_t round_start_time;
+
+
+    // Quick start
+    // We assume that at the begining, the road is straight so we increase the speed as much as possible
+    bool quick_start = false;
+    float quick_start_speed = 80;
+    Timer::time_duration_t quick_start_time = 3000;
 
 
     float delta_to_angle_coeff = -0.5;

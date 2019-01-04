@@ -18,6 +18,9 @@
 using namespace std;
 using namespace cv;
 
+// This flag turn to true on the first time receiving image from simulator
+bool racing = false;
+
 bool show_origin_image;
 bool use_traffic_sign_detector_2 = false;
 bool debug_show_fps = false;
@@ -41,6 +44,12 @@ void imageCallback(const sensor_msgs::ImageConstPtr& msg)
     Mat out;
     try
     {
+
+        if (racing == false) {
+            racing = true;
+            car->resetRound();
+        }
+
         cv_ptr = cv_bridge::toCvCopy(msg, sensor_msgs::image_encodings::BGR8);
         
         if (show_origin_image) {
@@ -120,9 +129,6 @@ int main(int argc, char **argv)
     ros::NodeHandle nh;
     image_transport::ImageTransport it(nh);
     image_transport::Subscriber sub = it.subscribe(config->getTeamName()+"_image", 1, imageCallback);
-
-
-   
 
     ros::spin();
 
