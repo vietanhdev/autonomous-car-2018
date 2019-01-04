@@ -9,7 +9,7 @@ CarControl::CarControl()
     readConfig();
 
     steer_publisher = node_obj1.advertise<std_msgs::Float32>(config->getTeamName() + "_steerAngle", 1);
-    speed_publisher = node_obj2.advertise<std_msgs::Float32>(config->getDefaultConfigInstance()->getTeamName() + "_speed", 1);
+    speed_publisher = node_obj2.advertise<std_msgs::Float32>(config->getTeamName() + "_speed", 1);
 
     publishSignal(0,0);
     last_signal_publish_time_point = Timer::getCurrentTime();
@@ -195,6 +195,7 @@ void CarControl::driverCar(Road & road, const std::vector<TrafficSign> & traffic
         }
         
         speed_data = speed_on_turning_trafficsign;
+
         turning_time_point = std::chrono::system_clock::now();
         is_turning = true;
     }

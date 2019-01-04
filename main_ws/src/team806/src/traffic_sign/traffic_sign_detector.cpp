@@ -282,7 +282,7 @@ void TrafficSignDetector::classifyRect(){
 	}
 }
 
-cv::Mat TrafficSignDetector::recognize(const cv::Mat & input, std::vector<TrafficSign> &traffic_signs){
+void TrafficSignDetector::recognize(const cv::Mat & input, std::vector<TrafficSign> &traffic_signs, cv::Mat & draw, bool draw_result){
 
     cv::Mat frame = input.clone();
 
@@ -335,7 +335,20 @@ cv::Mat TrafficSignDetector::recognize(const cv::Mat & input, std::vector<Traffi
     // Return value to traffic_signs
     traffic_signs = record.curr_rects;
 
-    if(debug_flag == true){
+    if(draw_result){
+        for(size_t i=0; i<traffic_signs.size(); i++){
+            if(traffic_signs[i].id != 0){
+                int x = traffic_signs[i].rect.tl().x;
+                int y = traffic_signs[i].rect.tl().y;
+                std::string text = traffic_signs[i].id == 1? "turn_left":"turn_right";
+                putText(draw, text, cv::Point(x, y), cv::FONT_HERSHEY_PLAIN, 1.0, CV_RGB(255,0,255), 2.0);
+                std::cout << text << " at [" << x << ", " << y << "] with area " << traffic_signs[i].rect.area() << std::endl;
+            }
+            rectangle(draw, traffic_signs[i].rect.tl(), traffic_signs[i].rect.br(), CV_RGB(255,0,255), 1, 8, 0);
+        }
+    }
+
+    if (debug_flag) {
         for(size_t i=0; i<traffic_signs.size(); i++){
             if(traffic_signs[i].id != 0){
                 int x = traffic_signs[i].rect.tl().x;
@@ -346,10 +359,16 @@ cv::Mat TrafficSignDetector::recognize(const cv::Mat & input, std::vector<Traffi
             }
             rectangle(img, traffic_signs[i].rect.tl(), traffic_signs[i].rect.br(), CV_RGB(255,0,255), 1, 8, 0);
         }
-        // imshow("traffic sign detection", img);
-        // cv::waitKey(1);
-        return img.clone();
-    } else {
-        return cv::Mat();
+        imshow("traffic sign detection", img);
+        cv::waitKey(1);
     }
+}
+
+
+
+void TrafficSignDetector::recognize(const cv::Mat & input, std::vector<TrafficSign> &traffic_signs) {
+
+    cv::Mat dummy_img;
+    recognize(input, traffic_signs, dummy_img, false);
+
 }

@@ -5,3 +5,4 @@ unity*
 main_ws/logfile*
 main_ws/.vscode/settings.json
 cds_test
+object_detection
