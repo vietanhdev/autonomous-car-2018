@@ -4,10 +4,12 @@
 CarControl::CarControl()
 {
 
+    config = Config::getDefaultConfigInstance();
+
     readConfig();
 
-    steer_publisher = node_obj1.advertise<std_msgs::Float32>(config.getTeamName() + "_steerAngle", 1);
-    speed_publisher = node_obj2.advertise<std_msgs::Float32>(config.getTeamName() + "_speed", 1);
+    steer_publisher = node_obj1.advertise<std_msgs::Float32>(config->getTeamName() + "_steerAngle", 1);
+    speed_publisher = node_obj2.advertise<std_msgs::Float32>(config->getDefaultConfigInstance()->getTeamName() + "_speed", 1);
 
     publishSignal(0,0);
     last_signal_publish_time_point = Timer::getCurrentTime();
@@ -19,22 +21,22 @@ CarControl::~CarControl() {}
 void CarControl::readConfig() {
 
     // Control Signal
-    MAX_SPEED = config.get<float>("max_speed");
-    MAX_ANGLE = config.get<float>("max_angle");
-    signal_publish_interval = config.get<long int>("control_signal_publish_interval");
+    MAX_SPEED = config->get<float>("max_speed");
+    MAX_ANGLE = config->get<float>("max_angle");
+    signal_publish_interval = config->get<long int>("control_signal_publish_interval");
 
-    line_diff_to_angle_coeff = config.get<float>("line_diff_to_angle_coeff");
-    delta_to_angle_coeff = config.get<float>("delta_to_angle_coeff");
-    middle_interested_point_pos = config.get<float>("middle_interested_point_pos");
-    min_num_of_middle_points = config.get<int>("min_num_of_middle_points");
-    min_traffic_sign_bound_area = config.get<int>("min_traffic_sign_bound_area");
-    traffic_sign_valid_duration = config.get<int>("traffic_sign_valid_duration");
-    speed_on_preparing_to_turn_trafficsign = config.get<float>("speed_on_preparing_to_turn_trafficsign");
-    lane_area_to_turn = config.get<int>("lane_area_to_turn");
-    turning_angle_on_trafficsign = config.get<float>("turning_angle_on_trafficsign");
-    speed_on_turning_trafficsign = config.get<float>("speed_on_turning_trafficsign");
-    turning_duration_trafficsign = config.get<int>("turning_duration_trafficsign");
-    line_diff_effect_speed_coeff = config.get<float>("line_diff_effect_speed_coeff");
+    line_diff_to_angle_coeff = config->get<float>("line_diff_to_angle_coeff");
+    delta_to_angle_coeff = config->get<float>("delta_to_angle_coeff");
+    middle_interested_point_pos = config->get<float>("middle_interested_point_pos");
+    min_num_of_middle_points = config->get<int>("min_num_of_middle_points");
+    min_traffic_sign_bound_area = config->get<int>("min_traffic_sign_bound_area");
+    traffic_sign_valid_duration = config->get<int>("traffic_sign_valid_duration");
+    speed_on_preparing_to_turn_trafficsign = config->get<float>("speed_on_preparing_to_turn_trafficsign");
+    lane_area_to_turn = config->get<int>("lane_area_to_turn");
+    turning_angle_on_trafficsign = config->get<float>("turning_angle_on_trafficsign");
+    speed_on_turning_trafficsign = config->get<float>("speed_on_turning_trafficsign");
+    turning_duration_trafficsign = config->get<int>("turning_duration_trafficsign");
+    line_diff_effect_speed_coeff = config->get<float>("line_diff_effect_speed_coeff");
 
    
 }

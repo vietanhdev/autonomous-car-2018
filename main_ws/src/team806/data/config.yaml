@@ -1,4 +1,4 @@
-team_name: "Team1"
+team_name: "team806"
 max_speed: 60
 max_angle: 50
 
@@ -6,8 +6,8 @@ max_angle: 50
 image_size: "320 240"
 
 # ==== debug_flag ====
-debug_show_origin_image: true
-debug_lane_detector: true
+debug_show_origin_image: false
+debug_lane_detector: false
 debug_car_control: false
 debug_sign_detector: true
 debug_show_fps: false

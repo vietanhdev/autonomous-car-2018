@@ -52,10 +52,21 @@ void imageCallback(const sensor_msgs::ImageConstPtr& msg)
         std::vector<TrafficSign> traffic_signs;
         lane_detector->findLanes(cv_ptr->image, road);
 
+
+        cv::Mat round1_img;
         if (!use_traffic_sign_detector_2) {
-            sign_detector->recognize(cv_ptr->image, traffic_signs);
+            round1_img = sign_detector->recognize(cv_ptr->image, traffic_signs);
         } else {
             sign_detector_2->recognize(cv_ptr->image, traffic_signs);
+        }
+
+        // Show image for round 1
+        if (!round1_img.empty()) {
+            if (!road.middle_points.empty()) {
+                circle(round1_img, road.middle_points[road.middle_points.size()-1], 1, cv::Scalar(255, 0, 0), 3);
+                imshow("RESULT", round1_img);
+                waitKey(1);
+            }
         }
 
         car->driverCar(road, traffic_signs);
@@ -78,28 +89,28 @@ void imageCallback(const sensor_msgs::ImageConstPtr& msg)
 int main(int argc, char **argv)
 {
 
-    Config config;
     ros::init(argc, argv, "image_listener");
+    std::shared_ptr<Config> config = Config::getDefaultConfigInstance();
 
-    debug_show_fps = config.get<bool>("debug_show_fps");
+    debug_show_fps = config->get<bool>("debug_show_fps");
 
     lane_detector = std::shared_ptr<LaneDetector>(new LaneDetector());
 
-    use_traffic_sign_detector_2 = config.get<bool>("use_traffic_sign_detector_2");
+    use_traffic_sign_detector_2 = config->get<bool>("use_traffic_sign_detector_2");
     if (!use_traffic_sign_detector_2) {
         sign_detector = std::shared_ptr<TrafficSignDetector>(new TrafficSignDetector());
-        sign_detector->debug_flag = config.get<bool>("debug_sign_detector");
+        sign_detector->debug_flag = config->get<bool>("debug_sign_detector");
     } else {
         sign_detector_2 = std::shared_ptr<TrafficSignDetector2>(new TrafficSignDetector2());
-        sign_detector_2->debug_flag = config.get<bool>("debug_sign_detector");
+        sign_detector_2->debug_flag = config->get<bool>("debug_sign_detector");
     }
 
     car = std::shared_ptr<CarControl>(new CarControl());
 
     // SET DEBUG OPTIONS
-    show_origin_image = config.get<bool>("debug_show_origin_image");
-    lane_detector->debug_flag = config.get<bool>("debug_lane_detector");
-    car->debug_flag = config.get<bool>("debug_car_control");
+    show_origin_image = config->get<bool>("debug_show_origin_image");
+    lane_detector->debug_flag = config->get<bool>("debug_lane_detector");
+    car->debug_flag = config->get<bool>("debug_car_control");
 
 
     cv::startWindowThread();
@@ -108,7 +119,7 @@ int main(int argc, char **argv)
 
     ros::NodeHandle nh;
     image_transport::ImageTransport it(nh);
-    image_transport::Subscriber sub = it.subscribe(config.getTeamName()+"_image", 1, imageCallback);
+    image_transport::Subscriber sub = it.subscribe(config->getTeamName()+"_image", 1, imageCallback);
 
 
    

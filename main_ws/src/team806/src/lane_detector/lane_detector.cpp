@@ -6,17 +6,17 @@ using namespace std;
 void LaneDetector::initConfig()
 {
 
-    img_size = config.getSize("image_size");
+    img_size = config->getSize("image_size");
 
     // ** Watershed
-    use_watershed = config.get<bool>("lane_use_watershed_segmentation");
+    use_watershed = config->get<bool>("lane_use_watershed_segmentation");
 
     // ** Floodfill
-    floodfill_lo = config.getScalar3("lane_floodfill_lo");
-    floodfill_hi = config.getScalar3("lane_floodfill_hi");
-    canny_edge_before_floodfill = config.get<bool>("canny_edge_before_floodfill");
+    floodfill_lo = config->getScalar3("lane_floodfill_lo");
+    floodfill_hi = config->getScalar3("lane_floodfill_hi");
+    canny_edge_before_floodfill = config->get<bool>("canny_edge_before_floodfill");
 
-    std::string floodfill_points_str = config.get<std::string>("lane_floodfill_points");
+    std::string floodfill_points_str = config->get<std::string>("lane_floodfill_points");
 
     // Extract the lane floodfill points
     ROS_INFO_STREAM("Reading lane_floodfill_point");
@@ -44,20 +44,20 @@ void LaneDetector::initPerspectiveTransform()
 
     // The 4 points that select quadilateral on the input , from top-left in clockwise order
     // These four pts are the sides of the rect box used as input
-    corners_source[0] = cv::Point2f(config.getPoint("lane_transform_src_tl"));
-    corners_source[1] = cv::Point2f(config.getPoint("lane_transform_src_tr"));
-    corners_source[2] = cv::Point2f(config.getPoint("lane_transform_src_br"));
-    corners_source[3] = cv::Point2f(config.getPoint("lane_transform_src_bl"));
+    corners_source[0] = cv::Point2f(config->getPoint("lane_transform_src_tl"));
+    corners_source[1] = cv::Point2f(config->getPoint("lane_transform_src_tr"));
+    corners_source[2] = cv::Point2f(config->getPoint("lane_transform_src_br"));
+    corners_source[3] = cv::Point2f(config->getPoint("lane_transform_src_bl"));
 
     // The 4 points where the mapping is to be done , from top-left in clockwise order
-    corners_trans[0] = cv::Point2f(config.getPoint("lane_transform_dst_tl"));
-    corners_trans[1] = cv::Point2f(config.getPoint("lane_transform_dst_tr"));
-    corners_trans[2] = cv::Point2f(config.getPoint("lane_transform_dst_br"));
-    corners_trans[3] = cv::Point2f(config.getPoint("lane_transform_dst_bl"));
+    corners_trans[0] = cv::Point2f(config->getPoint("lane_transform_dst_tl"));
+    corners_trans[1] = cv::Point2f(config->getPoint("lane_transform_dst_tr"));
+    corners_trans[2] = cv::Point2f(config->getPoint("lane_transform_dst_br"));
+    corners_trans[3] = cv::Point2f(config->getPoint("lane_transform_dst_bl"));
 
     getPerspectiveMatrix(corners_source, corners_trans);
 
-    perspective_img_size = cv::Size(config.getSize("perspective_img_size"));
+    perspective_img_size = cv::Size(config->getSize("perspective_img_size"));
 
     cv::Mat tmp(img_size, CV_8UC1, cv::Scalar(255));
     perspectiveTransform(tmp, interested_area);
@@ -97,6 +97,8 @@ cv::Mat LaneDetector::createWatershedStaticMask() {
 // ** Constructor
 LaneDetector::LaneDetector()
 {
+
+    config = Config::getDefaultConfigInstance();
 
     initConfig();
     initPerspectiveTransform();

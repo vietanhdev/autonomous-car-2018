@@ -5,32 +5,34 @@
 // ==================================================
 TrafficSignDetector::TrafficSignDetector(){
 
-    debug_flag = true;
-    config_trafficsign = Config("config_trafficsign.yaml");
+    config = Config::getDefaultConfigInstance();
+    config_trafficsign = Config::getNewConfigInstance("config_trafficsign.yaml");
 
-    std::string model_file = ros::package::getPath(config.getROSPackage()) + config_trafficsign.get<std::string>("traffic_sign_detector_svmfile");
+    debug_flag = true;
+
+    std::string model_file = ros::package::getPath(config->getROSPackage()) + config_trafficsign->get<std::string>("traffic_sign_detector_svmfile");
     model = cv::Algorithm::load<cv::ml::SVM>(model_file);
 
-    low_HSV = config_trafficsign.getScalar3("low_HSV");
-    high_HSV = config_trafficsign.getScalar3("high_HSV");
+    low_HSV = config_trafficsign->getScalar3("low_HSV");
+    high_HSV = config_trafficsign->getScalar3("high_HSV");
 
-    size = config_trafficsign.get<int>("crop_size");
-    eps_diff = config_trafficsign.get<float>("eps_diff");
+    size = config_trafficsign->get<int>("crop_size");
+    eps_diff = config_trafficsign->get<float>("eps_diff");
 
     // For filtering contours with area
-    min_area_contour = config_trafficsign.get<float>("min_area_contour");
-    max_area_contour = config_trafficsign.get<float>("max_area_contour");
+    min_area_contour = config_trafficsign->get<float>("min_area_contour");
+    max_area_contour = config_trafficsign->get<float>("max_area_contour");
 
     // For filtering bouding rects, compare high with min_accepted_size, ratio = high/width
-    min_accepted_size = config_trafficsign.get<float>("min_accepted_size");
-    max_accepted_size = config_trafficsign.get<float>("max_accepted_size");
-    min_accepted_ratio = config_trafficsign.get<float>("min_accepted_ratio");
-    max_accepted_ratio = config_trafficsign.get<float>("max_accepted_ratio");
+    min_accepted_size = config_trafficsign->get<float>("min_accepted_size");
+    max_accepted_size = config_trafficsign->get<float>("max_accepted_size");
+    min_accepted_ratio = config_trafficsign->get<float>("min_accepted_ratio");
+    max_accepted_ratio = config_trafficsign->get<float>("max_accepted_ratio");
 
     // Number of labeled bouding rects in previous frames is stored in 'record'
     // If there are enough similarity labeled bouding rects in 'record', we can label the current rects as them
-    num_prev_check = config_trafficsign.get<int>("num_prev_check");
-    num_certainty = config_trafficsign.get<int>("num_certainty");
+    num_prev_check = config_trafficsign->get<int>("num_prev_check");
+    num_certainty = config_trafficsign->get<int>("num_certainty");
 
     // Init HOG Descriptor config
     hog = cv::HOGDescriptor(
@@ -172,10 +174,10 @@ void TrafficSignDetector::inRangeHSV(cv::Mat &bin_img){
 	// Mark out all points in range, return binary image
 	inRange(img_HSV, low_HSV, high_HSV, bin_img);
     
-    if(debug_flag == true){
-        imshow("inRangeHSV", bin_img);
-        cv::waitKey(1);
-    }
+    // if(debug_flag == true){
+    //     imshow("inRangeHSV", bin_img);
+    //     cv::waitKey(1);
+    // }
 }
 
 void TrafficSignDetector::boundRectBinImg(cv::Mat bin_img, std::vector<cv::Rect> &bound_rects){
@@ -280,7 +282,7 @@ void TrafficSignDetector::classifyRect(){
 	}
 }
 
-void TrafficSignDetector::recognize(const cv::Mat & input, std::vector<TrafficSign> &traffic_signs){
+cv::Mat TrafficSignDetector::recognize(const cv::Mat & input, std::vector<TrafficSign> &traffic_signs){
 
     cv::Mat frame = input.clone();
 
@@ -338,13 +340,16 @@ void TrafficSignDetector::recognize(const cv::Mat & input, std::vector<TrafficSi
             if(traffic_signs[i].id != 0){
                 int x = traffic_signs[i].rect.tl().x;
                 int y = traffic_signs[i].rect.tl().y;
-                std::string text = traffic_signs[i].id == 1? "left":"right";
+                std::string text = traffic_signs[i].id == 1? "turn_left":"turn_right";
                 putText(img, text, cv::Point(x, y), cv::FONT_HERSHEY_PLAIN, 1.0, CV_RGB(255,0,255), 2.0);
                 std::cout << text << " at [" << x << ", " << y << "] with area " << traffic_signs[i].rect.area() << std::endl;
             }
             rectangle(img, traffic_signs[i].rect.tl(), traffic_signs[i].rect.br(), CV_RGB(255,0,255), 1, 8, 0);
         }
-        imshow("traffic sign detection", img);
-        cv::waitKey(1);
+        // imshow("traffic sign detection", img);
+        // cv::waitKey(1);
+        return img.clone();
+    } else {
+        return cv::Mat();
     }
 }

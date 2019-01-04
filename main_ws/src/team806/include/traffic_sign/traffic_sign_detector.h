@@ -23,8 +23,8 @@ typedef struct RecordStructure {
 class TrafficSignDetector {
     private:
 
-        Config config;
-        Config config_trafficsign;
+        std::shared_ptr<Config> config;
+        std::shared_ptr<Config> config_trafficsign;
 
         cv::Mat img;
         int width;
@@ -113,7 +113,7 @@ class TrafficSignDetector {
         void classifyRect();
 
         // Detect and classify traffic sign
-        void recognize(const cv::Mat & frame, std::vector<TrafficSign> &traffic_signs);
+        cv::Mat recognize(const cv::Mat & frame, std::vector<TrafficSign> &traffic_signs);
 };
 
 #endif

@@ -22,7 +22,7 @@ class LaneDetector {
 
     bool debug_flag = false;
 
-    Config config;
+    std::shared_ptr<Config> config;
 
     // ==== CONFIGURATION ====
 

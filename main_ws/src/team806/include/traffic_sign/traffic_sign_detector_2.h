@@ -20,7 +20,7 @@ class TrafficSignDetector2 {
 
     bool debug_flag;
 
-    Config config;
+    std::shared_ptr<Config> config;
 
     cv::Ptr<cv::ml::SVM> svm;
 

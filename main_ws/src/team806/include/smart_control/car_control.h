@@ -43,7 +43,7 @@ private:
 
     void publishSignal(float speed_data, float angle_data);
 
-    Config config;
+    std::shared_ptr<Config> config;
 
     // Manage control signal publish interval
     Timer::time_point_t last_signal_publish_time_point;

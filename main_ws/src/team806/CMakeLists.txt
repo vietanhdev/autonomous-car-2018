@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 2.8.3)
-project(ict60_racecar)
+project(team806)
 
 add_compile_options(-std=c++11)
 
@@ -36,8 +36,9 @@ set(YAML_CPP_BUILD_TOOLS OFF CACHE BOOL "disable yaml tools")
 set(YAML_CPP_BUILD_CONTRIB OFF CACHE BOOL "disable yaml contrib")
 add_subdirectory(src/yaml-cpp)
 
-add_executable(racecar
+add_executable(${PROJECT_NAME}_node
   src/racecar.cpp
+  src/config.cpp
   src/timer.cpp
   src/smart_control/car_control.cpp
   src/smart_control/PID.cpp
@@ -47,34 +48,16 @@ add_executable(racecar
   src/traffic_sign/traffic_sign_detector_2.cpp
 )
 
-add_executable(manual_control
-  src/manual_control.cpp
-  src/timer.cpp
-  src/smart_control/car_control.cpp
-  src/smart_control/PID.cpp
-  src/lane_detector/lane_detector.cpp
-  src/traffic_sign/traffic_sign.cpp
-  src/traffic_sign/traffic_sign_detector.cpp
-  src/traffic_sign/traffic_sign_detector_2.cpp
-)
-
-add_dependencies(racecar ${catkin_EXPORTED_TARGETS})
-add_dependencies(manual_control ${catkin_EXPORTED_TARGETS})
+add_dependencies(${PROJECT_NAME}_node ${catkin_EXPORTED_TARGETS})
 
 target_link_libraries(
-  racecar
+  ${PROJECT_NAME}_node
   yaml-cpp
   ${catkin_LIBRARIES}
   ${OpenCV_LIBS}
   ${Boost_LIBRARIES}
 )
-target_link_libraries(
-  manual_control
-  yaml-cpp
-  ${catkin_LIBRARIES}
-  ${OpenCV_LIBS}
-  ${Boost_LIBRARIES}
-)
+
 
 install(TARGETS ${ADDITIONAL_EXECUTABLES}
    ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}

@@ -6,8 +6,10 @@ using namespace cv::ml;
 
 TrafficSignDetector2::TrafficSignDetector2() {
 
-    color_file = ros::package::getPath(config.getROSPackage()) + config.get<std::string>("traffic_sign_detector_2_colorfile");
-    svm_file = ros::package::getPath(config.getROSPackage()) + config.get<std::string>("traffic_sign_detector_2_svmfile");
+    config = Config::getDefaultConfigInstance();
+
+    color_file = ros::package::getPath(config->getROSPackage()) + config->get<std::string>("traffic_sign_detector_2_colorfile");
+    svm_file = ros::package::getPath(config->getROSPackage()) + config->get<std::string>("traffic_sign_detector_2_svmfile");
 
 
     cout << "color_file: " << color_file << endl;

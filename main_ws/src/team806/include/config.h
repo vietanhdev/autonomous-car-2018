@@ -16,11 +16,32 @@ class Config {
 
     public:
 
+
+    std::string path;
     YAML::Node config;
+
+    // Instance for default config file
+    static std::shared_ptr<Config> default_instance;
+
+    static std::string racecar_pkg_name;
+    
 
     Config() {
 
         std::string path = ros::package::getPath(getROSPackage()) + std::string("/data/config.yaml");
+
+        this->path = path;
+
+        // Read config file
+        config = YAML::LoadFile(path);
+
+    }
+
+    Config(std::string config_file_name) {
+
+        std::string path = ros::package::getPath(getROSPackage()) + std::string("/data/" + config_file_name);
+
+        this->path = path;
 
         // Read config file
         config = YAML::LoadFile(path);
@@ -28,13 +49,22 @@ class Config {
     }
 
 
-    Config(std::string config_file_name) {
+    public:
 
-        std::string path = ros::package::getPath(getROSPackage()) + std::string("/data/" + config_file_name);
+    Config(Config * c) {
+        this->path = c->path;
+        this->config = c->config;
+    }
 
-        // Read config file
-        config = YAML::LoadFile(path);
+    static std::shared_ptr<Config> getDefaultConfigInstance() {
+        if (Config::default_instance == nullptr) {
+            Config::default_instance = std::make_shared<Config>(new Config());
+        }
+        return Config::default_instance;
+    }
 
+    static std::shared_ptr<Config> getNewConfigInstance(std::string config_file) {
+        return std::make_shared<Config>(new Config(config_file));
     }
 
     // Copy constructor 
@@ -47,9 +77,18 @@ class Config {
         return  ros::package::getPath(getROSPackage()) + std::string("/data/" + filename);
     }
 
-    static const std::string& getROSPackage() {
-        static std::string ROS_PACKAGE("ict60_racecar");
-        return ROS_PACKAGE;
+    
+    static std::string getROSPackage() {
+        if (racecar_pkg_name.empty()) {
+            ros::NodeHandle private_node_handle("~");
+            if (!private_node_handle.getParam("racecar_pkg_name", racecar_pkg_name)) {
+                std::cout << "Param: " << racecar_pkg_name << std::endl;
+                ROS_INFO("Param: %s", racecar_pkg_name.c_str());
+                racecar_pkg_name = "team806_1";
+            }
+            ROS_INFO("Param: %s", racecar_pkg_name.c_str());
+        }
+        return racecar_pkg_name;
     }
 
     std::string getTeamName() {
