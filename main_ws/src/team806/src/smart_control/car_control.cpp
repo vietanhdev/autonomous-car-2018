@@ -142,8 +142,8 @@ void CarControl::driverCar(Road & road, const std::vector<TrafficSign> & traffic
             if (abs(diff1 - diff2) < 20) {
                 line_diff = diff1;
             }
-            std::cout << "diff1: " << diff1 << std::endl;
-            std::cout << "diff2: " << diff2 << std::endl;
+            // std::cout << "diff1: " << diff1 << std::endl;
+            // std::cout << "diff2: " << diff2 << std::endl;
         }
 
         angle_data = delta * delta_to_angle_coeff + line_diff * line_diff_to_angle_coeff;

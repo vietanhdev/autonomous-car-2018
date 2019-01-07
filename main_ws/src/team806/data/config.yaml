@@ -1,16 +1,20 @@
 team_name: "team806"
-max_speed: 70
+max_speed: 60
 max_angle: 50
 
 # ==== General ====
 image_size: "320 240"
 
 # ==== debug_flag ====
+debug_obstacle_detector: false
 debug_show_origin_image: false
 debug_lane_detector: false
 debug_car_control: false
 debug_sign_detector: false
 debug_show_fps: true
+
+# ==== Obstacle detector ====
+obstacles_folder: "/data/obstacles"
 
 
 # ==== Traffic Sign detector ====

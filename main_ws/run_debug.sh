@@ -1,2 +1,2 @@
-rosrun --prefix 'gdb --args' ict60_racecar racecar _image_transport:=compressed
+rosrun --prefix 'gdb --args' team806 team806_node _image_transport:=compressed
 
