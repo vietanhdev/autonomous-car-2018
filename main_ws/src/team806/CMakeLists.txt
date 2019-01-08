@@ -46,6 +46,7 @@ add_executable(${PROJECT_NAME}_node
   src/traffic_sign/traffic_sign.cpp
   src/traffic_sign/traffic_sign_detector.cpp
   src/traffic_sign/traffic_sign_detector_2.cpp
+  src/obstacle_detector/obstacle_detector.cpp
 )
 
 add_dependencies(${PROJECT_NAME}_node ${catkin_EXPORTED_TARGETS})
