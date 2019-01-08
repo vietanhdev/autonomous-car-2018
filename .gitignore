@@ -1,8 +1,7 @@
 main_ws/build
 main_ws/devel
 main_ws/catkin_workspace
-unity*
 main_ws/logfile*
 main_ws/.vscode/settings.json
-cds_test
-object_detection
+simulators
+large_data_files
