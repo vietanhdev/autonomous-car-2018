@@ -2,10 +2,12 @@
 
 ## ENVIRONMENT REQUIREMENT
 
-- UBUNTU 18.04
+- UBUNTU 18.04 / 16.04
 - OPENCV 3.4.3: https://www.learncv.com/vi/cai-dat-opencv-tren-ubuntu-18-04/
 - NPM: https://www.npmjs.com/
-- ROS Melodic Morenia: http://wiki.ros.org/melodic/Installation/Ubuntu
+- ROS:
+    + For Ubuntu 18.04: ROS Melodic Morenia: http://wiki.ros.org/melodic/Installation/Ubuntu
+    + For Ubuntu 16.04: ROS Lunar: http://wiki.ros.org/lunar/Installation/Ubuntu
 - unzip: `sudo apt-get install unzip`
 - curl: `sudo apt-get install curl`
 
