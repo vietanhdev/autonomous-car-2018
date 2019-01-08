@@ -1,0 +1,1 @@
+bash ./scripts/download-simulator1.sh

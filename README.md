@@ -6,6 +6,8 @@
 - OPENCV 3.4.3: https://www.learncv.com/vi/cai-dat-opencv-tren-ubuntu-18-04/
 - NPM: https://www.npmjs.com/
 - ROS Melodic Morenia: http://wiki.ros.org/melodic/Installation/Ubuntu
+- unzip: `sudo apt-get install unzip`
+- curl: `sudo apt-get install curl`
 
 ## INSTALL
 
@@ -19,6 +21,13 @@ npm run init-workspace
 ~~~
 source <path-to-repo-folder>/main_ws/devel/setup.bash
 ~~~
+- **Step 5:** Download data files
+    + Download svm file for Traffic Sign Detector 2 (optional): `npm run download-svm-file-trafficsign-detector-2`
+    + Download all simulators (maybe large): `npm run download-all-simulators`
+    + Download all simulator 4 only: `npm run download-simulator4`
+    + Download all simulator 3 only: `npm run download-simulator4`
+    + Download all simulator 2 only: `npm run download-simulator4`
+    + Download all simulator 1 only: `npm run download-simulator4`
 
 ## RUN THE PROJECT
 

@@ -13,7 +13,13 @@
     "simulator1": "./simulators/unity_v1_Khong-bien-bao/build/Linux/test.x86_64",
     "simulator2": "./simulators/unity_v2_Co-bien-bao/build/linux/test.x86_64",
     "simulator3": "./simulators/unity_v3/test.x86_64",
-    "simulator4": "./simulators/cds_test/test.x86_64"
+    "simulator4": "./simulators/cds_test/test.x86_64",
+    "download-svm-file-trafficsign-detector-2": "bash ./scripts/download-svm-file-trafficsign-detector-2.sh",
+    "download-all-simulators": "bash ./scripts/download-all-simulators.sh",
+    "download-simulator1": "bash ./scripts/download-simulator1.sh",
+    "download-simulator2": "bash ./scripts/download-simulator2.sh",
+    "download-simulator3": "bash ./scripts/download-simulator3.sh",
+    "download-simulator4": "bash ./scripts/download-simulator4.sh"
   },
   "repository": {
     "type": "git",
