@@ -10,7 +10,7 @@ debug_obstacle_detector: false
 debug_show_origin_image: false
 debug_lane_detector: false
 debug_car_control: false
-debug_sign_detector: false
+debug_sign_detector: true
 debug_show_fps: true
 
 # ==== Obstacle detector ====
@@ -64,10 +64,8 @@ quick_start_speed: 200
 quick_start_time: 8000
 
 
-
 # Shortest time between 2 continuous times publishing controlling signal
 control_signal_publish_interval: 0
-
 
 line_diff_to_angle_coeff: -0.5
 line_diff_effect_speed_coeff : 2.0
@@ -86,7 +84,7 @@ min_num_of_middle_points: 10
 # If the number of middle points less than this value, do nothing with car controlling
 
 # Minimum area of traffic sign rectangle boundary
-min_traffic_sign_bound_area: 900
+min_traffic_sign_bound_area: 600
 
 # Valid duration for traffic sign recognition
 traffic_sign_valid_duration: 6000

@@ -19,7 +19,8 @@
     "download-simulator1": "bash ./scripts/download-simulator1.sh",
     "download-simulator2": "bash ./scripts/download-simulator2.sh",
     "download-simulator3": "bash ./scripts/download-simulator3.sh",
-    "download-simulator4": "bash ./scripts/download-simulator4.sh"
+    "download-simulator4": "bash ./scripts/download-simulator4.sh",
+    "image_viewer": "cd main_ws && rosrun rqt_image_view rqt_image_view"
   },
   "repository": {
     "type": "git",

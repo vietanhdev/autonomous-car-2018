@@ -19,6 +19,11 @@
 using namespace std;
 using namespace cv;
 
+
+
+// Global node handler
+ros::NodeHandlePtr node_handler;
+
 // This flag turn to true on the first time receiving image from simulator
 bool racing = false;
 
@@ -235,7 +240,7 @@ void trafficSignThread() {
 
 Timer::time_point_t last_obstacle_detect_time;
 void obstacleDetectorThread() {
-    float config_fps = 24;
+    float config_fps = 10;
     float current_fps;
     Timer::time_duration_t thread_delay_time = 0;
     Timer::time_duration_t thread_delay_time_step = 4;
@@ -359,7 +364,9 @@ int main(int argc, char **argv) {
     std::thread trafficsign_detector_thread(trafficSignThread);
     std::thread car_control_thread(carControlThread);
 
-    ros::spin();
+    ros::MultiThreadedSpinner spinner(2);
+    spinner.spin();
+
 
     cv::destroyAllWindows();
 }

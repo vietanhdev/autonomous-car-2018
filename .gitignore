@@ -7,3 +7,4 @@ simulators
 large_data_files
 main_ws/src/team806/data/svm.yml
 tmp
+experiments

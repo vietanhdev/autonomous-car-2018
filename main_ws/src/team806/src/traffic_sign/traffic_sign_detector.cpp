@@ -5,6 +5,10 @@
 // ==================================================
 TrafficSignDetector::TrafficSignDetector(){
 
+    // Init debug image publishers
+    debug_img_publisher = createImagePublisher("/trafficsign/debug_img", 1);
+    debug_img_publisher_inrange = createImagePublisher("/trafficsign/debug_img_inrange", 1);
+
     config = Config::getDefaultConfigInstance();
     config_trafficsign = Config::getNewConfigInstance("config_trafficsign.yaml");
 
@@ -174,10 +178,11 @@ void TrafficSignDetector::inRangeHSV(cv::Mat &bin_img){
 	// Mark out all points in range, return binary image
 	inRange(img_HSV, low_HSV, high_HSV, bin_img);
     
-    // if(debug_flag == true){
-    //     imshow("inRangeHSV", bin_img);
-    //     cv::waitKey(1);
-    // }
+    if(debug_flag == true){
+        // imshow("inRangeHSV", bin_img);
+        // cv::waitKey(1);
+        publishImage(debug_img_publisher_inrange, bin_img);
+    }
 }
 
 void TrafficSignDetector::boundRectBinImg(cv::Mat bin_img, std::vector<cv::Rect> &bound_rects){
@@ -359,8 +364,10 @@ void TrafficSignDetector::recognize(const cv::Mat & input, std::vector<TrafficSi
             }
             rectangle(img, traffic_signs[i].rect.tl(), traffic_signs[i].rect.br(), CV_RGB(255,0,255), 1, 8, 0);
         }
-        imshow("traffic sign detection", img);
-        cv::waitKey(1);
+        // imshow("traffic sign detection", img);
+        // cv::waitKey(1);
+        publishImage(debug_img_publisher, img);
+        
     }
 }
 

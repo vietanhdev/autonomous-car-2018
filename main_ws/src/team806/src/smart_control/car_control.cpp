@@ -188,6 +188,8 @@ void CarControl::driverCar(Road & road, const std::vector<TrafficSign> & traffic
         prepare_to_turn = false;
         if (debug_flag) ROS_INFO_STREAM("TURNING: " << last_sign_id);
 
+        std::cout << "TURNING: " << last_sign_id << std::endl;
+
         if (last_sign_id == TrafficSign::SignType::TURN_LEFT) {
             turning_coeff = -turning_angle_on_trafficsign;
         } else if (last_sign_id == TrafficSign::SignType::TURN_RIGHT) {

@@ -13,6 +13,7 @@
 
 #include "config.h"
 #include "traffic_sign.h"
+#include "image_publisher.h"
 
 typedef struct RecordStructure {
 	std::vector<TrafficSign> prev_rects;
@@ -20,8 +21,11 @@ typedef struct RecordStructure {
 	std::vector<int> count_rects;
 } Record;
 
-class TrafficSignDetector {
+class TrafficSignDetector: ImagePublisher {
     private:
+
+        image_transport::Publisher debug_img_publisher;
+        image_transport::Publisher debug_img_publisher_inrange;
 
         std::shared_ptr<Config> config;
         std::shared_ptr<Config> config_trafficsign;
@@ -48,6 +52,9 @@ class TrafficSignDetector {
 
         float min_accepted_size, max_accepted_size;
         float min_accepted_ratio, max_accepted_ratio;
+        
+
+        image_transport::Publisher debug_image_publisher;
 
     public:
 

@@ -75,6 +75,7 @@ After that enter the configuration into simulator and run it. The value of `Team
 - `npm run simulator2`: Run simulator v2
 - `npm run simulator3`: Run simulator v3
 - `npm run simulator4`: Run simulator v4
+- `npm run image_viewer`: Run image viewer (for debuging)
 
 
 
