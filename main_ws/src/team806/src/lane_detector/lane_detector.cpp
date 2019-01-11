@@ -100,6 +100,21 @@ LaneDetector::LaneDetector()
 
     config = Config::getDefaultConfigInstance();
 
+    debug_flag = config->get<bool>("debug_lane_detector");
+
+    // Init debug image publishers
+    if (debug_flag) {
+        debug_img_publisher_edge_points = createImagePublisher("lane_detector/edge_points", 1);
+        debug_img_publisher_watershed_marker_mask = createImagePublisher("lane_detector/watershed_marker_mask", 1);
+        debug_img_publisher_no_centerline_floodfill = createImagePublisher("lane_detector/floodfill_and_remove_centerline", 1);
+        debug_img_publisher_canny = createImagePublisher("lane_detector/canny", 1);
+        debug_img_publisher_lane_mask_floodfill = createImagePublisher("lane_detector/lane_mask_floodfill", 1);
+        debug_img_publisher_watershed_transformed = createImagePublisher("lane_detector/watershed_transformed", 1);
+        debug_img_publisher_lane_mask_transformed = createImagePublisher("lane_detector/lane_mask_transformed", 1);
+    }
+    
+
+
     initConfig();
     initPerspectiveTransform();
 
@@ -109,7 +124,6 @@ LaneDetector::LaneDetector()
 
     // Failback: read from file
     // watershed_static_mask = cv::imread(Config::getDataFile("watershed_mask.png"), CV_LOAD_IMAGE_GRAYSCALE);
-
 
 }
 
@@ -430,8 +444,9 @@ void LaneDetector::findLaneEdges(const cv::Mat &img, Road &road)
 
     if (debug_flag)
     {
-        cv::imshow("edge points", tmp);
-        cv::waitKey(1);
+        // cv::imshow("edge points", tmp);
+        // cv::waitKey(1);
+        publishImage(debug_img_publisher_edge_points, tmp);
     }
 }
 
@@ -513,8 +528,9 @@ cv::Mat LaneDetector::watershedLaneSegment(const cv::Mat &input, const cv::Mat &
 
     if (debug_flag)
     {
-        cv::imshow("watershed mask", marker_mask);
-        cv::waitKey(1);
+        // cv::imshow("watershed mask", marker_mask);
+        // cv::waitKey(1);
+        publishImage(debug_img_publisher_watershed_marker_mask, marker_mask);
     }
 
     // Doing watershed
@@ -565,8 +581,9 @@ cv::Mat LaneDetector::watershedLaneSegment(const cv::Mat &input, const cv::Mat &
     if (debug_flag)
     {
         wshed = wshed * 0.5 + gray * 0.5;
-        imshow("watershed transform", wshed);
-        cv::waitKey(1);
+        // imshow("watershed transform", wshed);
+        // cv::waitKey(1);
+        publishImage(debug_img_publisher_watershed_transformed, wshed);
     }
 }
 
@@ -578,8 +595,9 @@ void LaneDetector::findLaneArea(const cv::Mat &birdview_floodfill, Road &road) {
 
     if (debug_flag)
     {
-        cv::imshow("Floodfill -> remove centerline", no_centerline_floodfill);
-        cv::waitKey(1);
+        // cv::imshow("Floodfill -> remove centerline", no_centerline_floodfill);
+        // cv::waitKey(1);
+        publishImage(debug_img_publisher_no_centerline_floodfill, no_centerline_floodfill);
     }
 
     // Calculate lane area by counting white point
@@ -621,8 +639,9 @@ void LaneDetector::findLanes(const cv::Mat &input, Road &road)
 
         if (debug_flag)
         {
-            cv::imshow("img + canny_edges", img);
-            cv::waitKey(1);
+            // cv::imshow("img + canny_edges", img);
+            // cv::waitKey(1);
+            publishImage(debug_img_publisher_canny, img);
         }
     }
 
@@ -640,8 +659,9 @@ void LaneDetector::findLanes(const cv::Mat &input, Road &road)
 
     if (debug_flag)
     {
-        cv::imshow("Lane mask by Floodfill", lane_mask_floodfill);
-        cv::waitKey(1);
+        // cv::imshow("Lane mask by Floodfill", lane_mask_floodfill);
+        // cv::waitKey(1);
+        publishImage(debug_img_publisher_lane_mask_floodfill, lane_mask_floodfill);
     }
 
     // ================================================
@@ -651,11 +671,6 @@ void LaneDetector::findLanes(const cv::Mat &input, Road &road)
     cv::Mat birdview_floodfill;
     perspectiveTransform(lane_mask_floodfill, birdview_floodfill);
 
-    if (debug_flag)
-    {
-        cv::imshow("FloodFill mask -> perspective transform", birdview_floodfill);
-        cv::waitKey(1);
-    }
 
 
     // ================================================
@@ -688,8 +703,9 @@ void LaneDetector::findLanes(const cv::Mat &input, Road &road)
 
         if (debug_flag)
         {
-            cv::imshow("lane_mask > perspective transform", lane_mask);
-            cv::waitKey(1);
+            // cv::imshow("lane_mask > perspective transform", lane_mask);
+            // cv::waitKey(1);
+            publishImage(debug_img_publisher_lane_mask_transformed, lane_mask);
         }
 
     }

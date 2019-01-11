@@ -13,6 +13,12 @@ DetectedObject::DetectedObject(int label, cv::Rect position) {
 ObstacleDetector::ObstacleDetector() {
     // Load the config
     config = Config::getDefaultConfigInstance();
+    debug_flag = config->get<bool>("debug_obstacle_detector");
+
+    // Init debug image publishers
+    if (debug_flag) {
+        debug_img_publisher = createImagePublisher("obstacle_detector/debug_img", 1);
+    }
 
     // Load all obstacle models
     std::string obstacles_folder_path =
@@ -150,8 +156,9 @@ int ObstacleDetector::detect(const cv::Mat &img,
             }
         }
 
-        cv::imshow("Object Detector Debug", draw);
-        cv::waitKey(1);
+        // cv::imshow("Object Detector Debug", draw);
+        // cv::waitKey(1);
+        publishImage(debug_img_publisher, draw);
     }
 
     // cout << "DETECTED OBSTACLES: " << detected_obstacle_bounds.size() <<
@@ -196,7 +203,7 @@ bool ObstacleDetector::matching(const Mat &img, const Mat &templ, std::vector<cv
 
     /// Show me what you got
     if (maxVal > 0.8) {
-        cout << "MATCHED" << endl;
+        cout << "OBJECT TEMPLATE MATCHED" << endl;
         rects.push_back(cv::Rect(
             matchLoc, Point(matchLoc.x + templ.cols, matchLoc.y + templ.rows)));
         return true;

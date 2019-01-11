@@ -13,7 +13,7 @@
 #include <sstream>
 #include <vector>
 #include "config.h"
-
+#include "image_publisher.h"
 
 class DetectedObject {
    public:
@@ -25,9 +25,11 @@ class DetectedObject {
     DetectedObject(int label, cv::Rect position);
 };
 
-class ObstacleDetector {
+class ObstacleDetector : ImagePublisher {
    public:
     bool debug_flag = false;
+    image_transport::Publisher debug_img_publisher;
+
     std::shared_ptr<Config> config;
 
     std::vector<cv::Mat> obstacles;

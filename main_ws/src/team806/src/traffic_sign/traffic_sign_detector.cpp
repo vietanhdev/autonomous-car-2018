@@ -5,14 +5,17 @@
 // ==================================================
 TrafficSignDetector::TrafficSignDetector(){
 
-    // Init debug image publishers
-    debug_img_publisher = createImagePublisher("trafficsign/debug_img", 1);
-    debug_img_publisher_inrange = createImagePublisher("trafficsign/debug_img_inrange", 1);
 
     config = Config::getDefaultConfigInstance();
     config_trafficsign = Config::getNewConfigInstance("config_trafficsign.yaml");
+    debug_flag = config->get<bool>("debug_sign_detector");
 
-    debug_flag = true;
+    // Init debug image publishers
+    if (debug_flag) {
+        debug_img_publisher = createImagePublisher("trafficsign/debug_img", 1);
+        debug_img_publisher_inrange = createImagePublisher("trafficsign/debug_img_inrange", 1);
+    }
+    
 
     std::string model_file = ros::package::getPath(config->getROSPackage()) + config_trafficsign->get<std::string>("traffic_sign_detector_svmfile");
     model = cv::Algorithm::load<cv::ml::SVM>(model_file);

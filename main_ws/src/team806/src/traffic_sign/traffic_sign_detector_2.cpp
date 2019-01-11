@@ -7,6 +7,13 @@ using namespace cv::ml;
 TrafficSignDetector2::TrafficSignDetector2() {
 
     config = Config::getDefaultConfigInstance();
+    debug_flag = config->get<bool>("debug_sign_detector");
+
+    // Init debug image publishers
+    if (debug_flag) {
+        debug_img_publisher = createImagePublisher("trafficsign/debug_img", 1);
+        debug_img_publisher_inrange = createImagePublisher("trafficsign/debug_img_inrange", 1);
+    }
 
     color_file = ros::package::getPath(config->getROSPackage()) + config->get<std::string>("traffic_sign_detector_2_colorfile");
     svm_file = ros::package::getPath(config->getROSPackage()) + config->get<std::string>("traffic_sign_detector_2_svmfile");
@@ -220,6 +227,12 @@ std::vector<cv::Rect> TrafficSignDetector2::detect(const cv::Mat & input) {
     // Threshold
     cv::threshold(result_img, result_img, 1, 255, cv::THRESH_BINARY);
 
+    // Publish debug image
+    if (debug_flag) {
+        publishImage(debug_img_publisher_inrange, result_img);
+    }
+    
+
     /// Find contours
     std::vector<std::vector<cv::Point> > contours;
     cv::findContours( result_img, contours, CV_RETR_TREE, CV_CHAIN_APPROX_SIMPLE, cv::Point(0, 0) );
@@ -264,8 +277,9 @@ void TrafficSignDetector2::recognize(cv::Mat & input, std::vector<TrafficSign> &
     }
 
     if (debug_flag) {
-        cv::imshow("Traffic Sign Recognition", draw);
-        cv::waitKey(1);
+        // cv::imshow("Traffic Sign Recognition", draw);
+        // cv::waitKey(1);
+        publishImage(debug_img_publisher, draw);
     }
 
 

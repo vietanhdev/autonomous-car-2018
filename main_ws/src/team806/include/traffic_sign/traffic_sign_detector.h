@@ -54,8 +54,6 @@ class TrafficSignDetector: ImagePublisher {
         float min_accepted_ratio, max_accepted_ratio;
         
 
-        image_transport::Publisher debug_image_publisher;
-
     public:
 
         bool debug_flag = true;

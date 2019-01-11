@@ -13,14 +13,22 @@
 
 #include "config.h"
 #include "road.h"
+#include "image_publisher.h"
 
 
-
-class LaneDetector {
+class LaneDetector: ImagePublisher {
 
     public:
 
     bool debug_flag = false;
+
+    image_transport::Publisher debug_img_publisher_edge_points;
+    image_transport::Publisher debug_img_publisher_watershed_marker_mask;
+    image_transport::Publisher debug_img_publisher_no_centerline_floodfill;
+    image_transport::Publisher debug_img_publisher_canny;
+    image_transport::Publisher debug_img_publisher_lane_mask_floodfill;
+    image_transport::Publisher debug_img_publisher_watershed_transformed;
+    image_transport::Publisher debug_img_publisher_lane_mask_transformed;
 
     std::shared_ptr<Config> config;
 

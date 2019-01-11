@@ -13,12 +13,15 @@
 
 #include "config.h"
 #include "traffic_sign.h"
+#include "image_publisher.h"
 
-class TrafficSignDetector2 {
+class TrafficSignDetector2: ImagePublisher {
 
     public:
 
     bool debug_flag;
+    image_transport::Publisher debug_img_publisher;
+    image_transport::Publisher debug_img_publisher_inrange;
 
     std::shared_ptr<Config> config;
 

@@ -7,11 +7,10 @@ image_size: "320 240"
 
 # ==== debug_flag ====
 debug_obstacle_detector: false
-debug_show_origin_image: false
 debug_lane_detector: false
 debug_car_control: false
-debug_sign_detector: true
-debug_show_fps: true
+debug_sign_detector: false
+debug_show_fps: false
 
 # ==== Obstacle detector ====
 obstacles_folder: "/data/obstacles"

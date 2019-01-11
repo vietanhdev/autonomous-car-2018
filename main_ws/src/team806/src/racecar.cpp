@@ -26,7 +26,6 @@ using namespace cv;
 // This flag turn to true on the first time receiving image from simulator
 bool racing = false;
 
-bool show_origin_image;
 bool use_traffic_sign_detector_2 = false;
 bool debug_show_fps = false;
 
@@ -39,6 +38,7 @@ std::shared_ptr<TrafficSignDetector2> sign_detector_2;
 std::shared_ptr<ImagePublisher> img_publisher;
 image_transport::Publisher experiment_img_pub;
 image_transport::Publisher experiment_img_pub_canny;
+image_transport::Publisher experiment_img_pub_meanshift;
 
 // ============ Current State ==================
 
@@ -243,6 +243,40 @@ void trafficSignThread() {
     }
 }
 
+
+// Experiement: Meanshift
+
+//This colors the segmentations
+void floodFillPostprocess( Mat& img, const Scalar& colorDiff=Scalar::all(1) )
+{
+    CV_Assert( !img.empty() );
+    RNG rng = theRNG();
+    Mat mask( img.rows+2, img.cols+2, CV_8UC1, Scalar::all(0) );
+    for( int y = 0; y < img.rows; y++ )
+    {
+        for( int x = 0; x < img.cols; x++ )
+        {
+            if( mask.at<uchar>(y+1, x+1) == 0 )
+            {
+                Scalar newVal( rng(256), rng(256), rng(256) );
+                floodFill( img, mask, Point(x,y), newVal, 0, colorDiff, colorDiff );
+            }
+        }
+    }
+}
+
+void meanShiftSegmentation( const cv::Mat & img, cv::Mat res )
+{
+    int spatialRad = 60, colorRad = 40, maxPyrLevel = 3;
+    cout << "spatialRad=" << spatialRad << "; "
+         << "colorRad=" << colorRad << "; "
+         << "maxPyrLevel=" << maxPyrLevel << endl;
+    pyrMeanShiftFiltering( img, res, spatialRad, colorRad, maxPyrLevel );
+    floodFillPostprocess( res, Scalar::all(2) );
+}
+
+
+
 Timer::time_point_t last_obstacle_detect_time;
 void obstacleDetectorThread() {
     float config_fps = 10;
@@ -256,26 +290,6 @@ void obstacleDetectorThread() {
         {
             std::lock_guard<std::mutex> guard(current_img_mutex);
             img = current_img.clone();
-        }
-
-        cv::Mat lane_img;
-        {
-            std::lock_guard<std::mutex> guard(road_mutex);
-            img.copyTo(lane_img, road.lane_mask);
-        }
-
-        if (!lane_img.empty()) {
-            // cv::imshow("lane_img", lane_img);
-            // cv::waitKey(1);
-            img_publisher->publishImage(experiment_img_pub, lane_img);
-
-            cv::Mat gray;
-            cv::Mat canny;
-            cvtColor(lane_img, gray, CV_BGR2GRAY);
-            Canny( lane_img, canny, 180, 200, 3);
-            // canny.convertTo(draw, CV_8U);
-            img_publisher->publishImage(experiment_img_pub_canny, canny);
-
         }
 
         // Detect obstacle
@@ -322,11 +336,6 @@ void imageCallback(const sensor_msgs::ImageConstPtr &msg) {
             current_img = cv_ptr->image.clone();
         }
 
-        // Show current image
-        if (show_origin_image) {
-            cv::imshow("View", cv_ptr->image);
-            cv::waitKey(1);
-        }
     } catch (cv_bridge::Exception &e) {
         ROS_ERROR("Could not convert from '%s' to 'bgr8'.",
                   msg->encoding.c_str());
@@ -339,6 +348,7 @@ void imageCallback(const sensor_msgs::ImageConstPtr &msg) {
 
     if (debug_show_fps) ROS_INFO_STREAM("Simulation speed: " << sim_speed);
 
+    
     // cout << "Simulation speed: " << sim_speed << endl;
 }
 
@@ -346,10 +356,17 @@ int main(int argc, char **argv) {
     ros::init(argc, argv, "team806_node");
     std::shared_ptr<Config> config = Config::getDefaultConfigInstance();
 
+    if( ros::console::set_logger_level(ROSCONSOLE_DEFAULT_NAME, ros::console::levels::Debug) ) {
+        ros::console::notifyLoggerLevelsChanged();
+    }
+
+    ROS_ERROR("Ghi Log Error");
+    ROS_INFO("Ghi Log Info");
 
     img_publisher = std::make_shared<ImagePublisher>();
     experiment_img_pub = img_publisher->createImagePublisher("experiment_img", 1);
     experiment_img_pub_canny = img_publisher->createImagePublisher("experiment_img/canny", 1);
+    experiment_img_pub_meanshift = img_publisher->createImagePublisher("experiment_img/meanshift", 1);
 
     debug_show_fps = config->get<bool>("debug_show_fps");
 
@@ -363,23 +380,15 @@ int main(int argc, char **argv) {
     if (!use_traffic_sign_detector_2) {
         sign_detector =
             std::shared_ptr<TrafficSignDetector>(new TrafficSignDetector());
-        sign_detector->debug_flag = config->get<bool>("debug_sign_detector");
     } else {
         sign_detector_2 =
             std::shared_ptr<TrafficSignDetector2>(new TrafficSignDetector2());
-        sign_detector_2->debug_flag = config->get<bool>("debug_sign_detector");
     }
 
     car = std::shared_ptr<CarControl>(new CarControl());
 
     // SET DEBUG OPTIONS
-    show_origin_image = config->get<bool>("debug_show_origin_image");
-    lane_detector->debug_flag = config->get<bool>("debug_lane_detector");
-    obstacle_detector->debug_flag =
-        config->get<bool>("debug_obstacle_detector");
     car->debug_flag = config->get<bool>("debug_car_control");
-
-    cv::startWindowThread();
 
     start_time_point = Timer::getCurrentTime();
 
