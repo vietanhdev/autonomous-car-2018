@@ -49,6 +49,7 @@
         "mutex": "cpp",
         "numeric": "cpp",
         "thread": "cpp",
-        "cinttypes": "cpp"
+        "cinttypes": "cpp",
+        "algorithm": "cpp"
     }
 }

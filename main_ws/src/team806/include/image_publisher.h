@@ -8,15 +8,18 @@
 #include <opencv2/highgui/highgui.hpp>
 
 class ImagePublisher {
-    ros::NodeHandle nh_;
-    image_transport::ImageTransport it_;
+    std::shared_ptr<ros::NodeHandle> nh_;
+    std::shared_ptr<image_transport::ImageTransport> it_;
 
     public:
 
-    ImagePublisher() : it_(nh_) {}
+    ImagePublisher() {
+        nh_ = std::shared_ptr<ros::NodeHandle>(new ros::NodeHandle("~"));
+        it_ = std::shared_ptr<image_transport::ImageTransport>(new image_transport::ImageTransport(*nh_));
+    }
 
     image_transport::Publisher createImagePublisher(std::string topic_name, int queue_size) {
-        return it_.advertise(topic_name, queue_size);
+        return it_->advertise(topic_name, queue_size);
     }
 
     cv_bridge::CvImagePtr getImageMsgPtr(const cv::Mat & img) {

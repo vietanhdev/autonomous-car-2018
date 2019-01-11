@@ -15,6 +15,7 @@
 #include "traffic_sign.h"
 #include "traffic_sign_detector.h"
 #include "traffic_sign_detector_2.h"
+#include "image_publisher.h"
 
 using namespace std;
 using namespace cv;
@@ -36,6 +37,10 @@ std::shared_ptr<LaneDetector> lane_detector;
 std::shared_ptr<ObstacleDetector> obstacle_detector;
 std::shared_ptr<TrafficSignDetector> sign_detector;
 std::shared_ptr<TrafficSignDetector2> sign_detector_2;
+
+std::shared_ptr<ImagePublisher> img_publisher;
+image_transport::Publisher experiment_img_pub;
+image_transport::Publisher experiment_img_pub_canny;
 
 // ============ Current State ==================
 
@@ -253,6 +258,26 @@ void obstacleDetectorThread() {
             img = current_img.clone();
         }
 
+        cv::Mat lane_img;
+        {
+            std::lock_guard<std::mutex> guard(road_mutex);
+            img.copyTo(lane_img, road.lane_mask);
+        }
+
+        if (!lane_img.empty()) {
+            // cv::imshow("lane_img", lane_img);
+            // cv::waitKey(1);
+            img_publisher->publishImage(experiment_img_pub, lane_img);
+
+            cv::Mat gray;
+            cv::Mat canny;
+            cvtColor(lane_img, gray, CV_BGR2GRAY);
+            Canny( lane_img, canny, 180, 200, 3);
+            // canny.convertTo(draw, CV_8U);
+            img_publisher->publishImage(experiment_img_pub_canny, canny);
+
+        }
+
         // Detect obstacle
         if (!img.empty()) {
             std::vector<cv::Rect> detected_obstacles;
@@ -320,6 +345,11 @@ void imageCallback(const sensor_msgs::ImageConstPtr &msg) {
 int main(int argc, char **argv) {
     ros::init(argc, argv, "image_listener");
     std::shared_ptr<Config> config = Config::getDefaultConfigInstance();
+
+
+    img_publisher = std::make_shared<ImagePublisher>();
+    experiment_img_pub = img_publisher->createImagePublisher("experiment_img", 1);
+    experiment_img_pub_canny = img_publisher->createImagePublisher("experiment_img/canny", 1);
 
     debug_show_fps = config->get<bool>("debug_show_fps");
 
