@@ -240,6 +240,8 @@ void trafficSignThread() {
 
             last_trafficsign_detect_time = Timer::getCurrentTime();
         }
+
+	ROS_ERROR("LOI");
     }
 }
 
