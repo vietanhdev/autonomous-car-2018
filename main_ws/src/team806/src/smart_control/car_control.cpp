@@ -170,7 +170,12 @@ void CarControl::driverCar(Road & road, const std::vector<TrafficSign> & traffic
         }
 
 
-        if (traffic_signs[0].rect.area() > min_traffic_sign_bound_area) {
+        if (traffic_signs[0].rect.area() > min_traffic_sign_bound_area
+            && (
+                traffic_signs[0].id == TrafficSign::SignType::TURN_LEFT
+                || traffic_signs[0].id == TrafficSign::SignType::TURN_RIGHT
+            )
+        ) {
 
             prepare_to_turn = true;
             last_sign_id = traffic_signs[0].id;
