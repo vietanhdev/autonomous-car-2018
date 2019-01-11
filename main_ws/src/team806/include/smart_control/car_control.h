@@ -101,6 +101,12 @@ private:
     float delta_to_angle_coeff = -0.5;
     float middle_interested_point_pos = 0.6;
 
+    // Adjust middle point. 
+    // Negative value brings car to the left, 
+    // Positive value brings car to the right
+    // Pratical safe range [-20, 20]
+    int middle_point_adjustment = 0;
+
     float line_diff_to_angle_coeff = -1;
     float line_diff_effect_speed_coeff = 1; // How the angle of line effects the speed
 

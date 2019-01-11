@@ -44,6 +44,9 @@ void CarControl::readConfig() {
     quick_start = config->get<bool>("quick_start");
     quick_start_speed = config->get<float>("quick_start_speed");
     quick_start_time = config->get<Timer::time_duration_t>("quick_start_time");
+
+
+    middle_point_adjustment = config->get<int>("middle_point_adjustment");
     
 
    
@@ -131,7 +134,7 @@ void CarControl::driverCar(Road & road, const std::vector<TrafficSign> & traffic
 
         //  STEP 3: FIND THE BASE CONTROLLING PARAMS ( BASED ON LANE LINES )
         speed_data = MAX_SPEED;
-        float delta = center_point.x - middle_point.x;
+        float delta = center_point.x - middle_point.x - middle_point_adjustment;
 
 
         // line_diff_to_angle_coeff

@@ -70,6 +70,12 @@ control_signal_publish_interval: 0
 line_diff_to_angle_coeff: -0.5
 line_diff_effect_speed_coeff : 2.0
 
+# Adjust middle point. 
+# Negative value brings car to the left, 
+# Positive value brings car to the right
+# Pratical safe range [-20, 20]
+middle_point_adjustment: 0
+
 delta_to_angle_coeff: -0.6
 # delta: difference between middle point and center point
 # angle: the angle to turn the car
