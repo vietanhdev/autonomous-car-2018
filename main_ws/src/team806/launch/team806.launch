@@ -19,9 +19,10 @@ limitations under the License.
     <arg name="port" value="9001" />
   </include> -->
 
-  <node name="team806" pkg="team806" type="team806_node">
+  <node name="team806" pkg="team806" type="team806_node" output="screen">
     <param name="image_transport" value="compressed" />
     <param name="racecar_pkg_name" value="team806" />
   </node>
+
 
 </launch>

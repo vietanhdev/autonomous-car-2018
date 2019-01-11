@@ -6,8 +6,8 @@
 TrafficSignDetector::TrafficSignDetector(){
 
     // Init debug image publishers
-    debug_img_publisher = createImagePublisher("/trafficsign/debug_img", 1);
-    debug_img_publisher_inrange = createImagePublisher("/trafficsign/debug_img_inrange", 1);
+    debug_img_publisher = createImagePublisher("trafficsign/debug_img", 1);
+    debug_img_publisher_inrange = createImagePublisher("trafficsign/debug_img_inrange", 1);
 
     config = Config::getDefaultConfigInstance();
     config_trafficsign = Config::getNewConfigInstance("config_trafficsign.yaml");

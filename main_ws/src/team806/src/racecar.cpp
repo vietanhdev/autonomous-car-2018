@@ -16,14 +16,12 @@
 #include "traffic_sign_detector.h"
 #include "traffic_sign_detector_2.h"
 #include "image_publisher.h"
+#include <ros/console.h>
 
 using namespace std;
 using namespace cv;
 
 
-
-// Global node handler
-ros::NodeHandlePtr node_handler;
 
 // This flag turn to true on the first time receiving image from simulator
 bool racing = false;
@@ -108,7 +106,7 @@ void drawResultRound1() {
                 std::string text;
                 if (traffic_signs[i].id == TrafficSign::SignType::TURN_LEFT) {
                     text = "turn_left";
-                } else {
+                } else if (traffic_signs[i].id == TrafficSign::SignType::TURN_RIGHT) {
                     text = "turn_right";
                 }
                 setLabel(draw, text, traffic_signs[i].rect.tl());
@@ -126,6 +124,7 @@ void drawResultRound1() {
 
         imshow("RESULT", draw);
         waitKey(1);
+
         Timer::delay(100);
     }
 }
@@ -210,6 +209,7 @@ void trafficSignThread() {
     Timer::time_duration_t thread_delay_time_step = 4;
 
     while (true) {
+
         // Copy current image
         cv::Mat img;
         {
@@ -343,7 +343,7 @@ void imageCallback(const sensor_msgs::ImageConstPtr &msg) {
 }
 
 int main(int argc, char **argv) {
-    ros::init(argc, argv, "image_listener");
+    ros::init(argc, argv, "team806_node");
     std::shared_ptr<Config> config = Config::getDefaultConfigInstance();
 
 
