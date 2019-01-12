@@ -98,6 +98,10 @@ private:
     Timer::time_duration_t quick_start_time = 3000;
 
 
+
+    // ======================== LANE ==============================
+
+
     float delta_to_angle_coeff = -0.5;
     float middle_interested_point_pos = 0.6;
 
@@ -113,6 +117,15 @@ private:
     // Minimum number of middle points found by lane detector.
     // If the number of middle points less than this value, do nothing with car controlling
     int min_num_of_middle_points = 10;
+
+
+    // ======================== TRAFFIC SIGN ==============================
+
+    // Conditions to turn
+    bool turn_on_trafficsign_by_lane_area = true; // Rẽ khi đến ngã ba, ngã tư (diện tích đường tăng lên)
+    bool turn_on_trafficsign_by_passed_time = false; // Rẽ sau khi thấy biển 1 thời gian
+    int traffic_sign_passed_time_lower_bound = 2000; // Cận dưới của thời gian bắt đầu rẽ.
+    int traffic_sign_passed_time_higher_bound = 2500; // Cận trên của thời gian bắt đầu rẽ.
 
     // Minimum area of traffic sign rectangle boundary
     int min_traffic_sign_bound_area = 1000;

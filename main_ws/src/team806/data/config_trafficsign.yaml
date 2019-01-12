@@ -19,5 +19,5 @@ max_accepted_ratio: 1.5
 
 # Number of labeled bouding rects in previous frames is stored in 'record'
 # If there are enough similarity labeled bouding rects in 'record', we can label the current rects as them
-num_prev_check: 5
-num_certainty: 3
+num_prev_check: 1
+num_certainty: 1
