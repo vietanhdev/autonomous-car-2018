@@ -189,7 +189,6 @@ void TrafficSignDetector::inRangeHSV(cv::Mat &bin_img){
 }
 
 void TrafficSignDetector::boundRectBinImg(cv::Mat bin_img, std::vector<cv::Rect> &bound_rects){
-	int eps_diff = 0.01;
 
 	std::vector<std::vector<cv::Point>> contours;
 	std::vector<cv::Vec4i> hierarchy;
