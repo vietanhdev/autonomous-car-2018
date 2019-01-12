@@ -87,8 +87,8 @@ min_num_of_middle_points: 10
 
 
 ### Traffic sign controlling params ###
-turn_on_trafficsign_by_lane_area: false
-turn_on_trafficsign_by_passed_time: true
+turn_on_trafficsign_by_lane_area: true
+turn_on_trafficsign_by_passed_time: false
 traffic_sign_passed_time_lower_bound: 300
 traffic_sign_passed_time_higher_bound: 1000
 
