@@ -63,9 +63,6 @@ quick_start_speed: 200
 quick_start_time: 8000
 
 
-# Shortest time between 2 continuous times publishing controlling signal
-control_signal_publish_interval: 0
-
 line_diff_to_angle_coeff: -0.5
 line_diff_effect_speed_coeff : 2.0
 
@@ -88,6 +85,14 @@ min_num_of_middle_points: 10
 # Minimum number of middle points found by lane detector.
 # If the number of middle points less than this value, do nothing with car controlling
 
+
+### Traffic sign controlling params ###
+turn_on_trafficsign_by_lane_area: false
+turn_on_trafficsign_by_passed_time: true
+traffic_sign_passed_time_lower_bound: 300
+traffic_sign_passed_time_higher_bound: 1000
+
+  
 # Minimum area of traffic sign rectangle boundary
 min_traffic_sign_bound_area: 600
 
@@ -99,11 +104,11 @@ speed_on_preparing_to_turn_trafficsign: 5
 
 # Using lane area as a signal to turn
 # If the lane > this value, change the direction of the car
-lane_area_to_turn: 19000
+lane_area_to_turn: 20000
 
 # The angle we use to change direction of the car when we meet a traffic sign
 turning_angle_on_trafficsign: 40
 
 speed_on_turning_trafficsign: 40
 
-turning_duration_trafficsign: 1300
+turning_duration_trafficsign: 1500

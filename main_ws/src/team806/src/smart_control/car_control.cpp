@@ -23,12 +23,17 @@ void CarControl::readConfig() {
     // Control Signal
     MAX_SPEED = config->get<float>("max_speed");
     MAX_ANGLE = config->get<float>("max_angle");
-    signal_publish_interval = config->get<long int>("control_signal_publish_interval");
 
     line_diff_to_angle_coeff = config->get<float>("line_diff_to_angle_coeff");
     delta_to_angle_coeff = config->get<float>("delta_to_angle_coeff");
     middle_interested_point_pos = config->get<float>("middle_interested_point_pos");
     min_num_of_middle_points = config->get<int>("min_num_of_middle_points");
+
+    turn_on_trafficsign_by_lane_area =  config->get<bool>("turn_on_trafficsign_by_lane_area");; // Rẽ khi đến ngã ba, ngã tư (diện tích đường tăng lên)
+    turn_on_trafficsign_by_passed_time =  config->get<bool>("turn_on_trafficsign_by_passed_time");; // Rẽ sau khi thấy biển 1 thời gian
+    traffic_sign_passed_time_lower_bound =  config->get<int>("traffic_sign_passed_time_lower_bound");; // Cận dưới của thời gian bắt đầu rẽ.
+    traffic_sign_passed_time_higher_bound =  config->get<int>("traffic_sign_passed_time_higher_bound");; // Cận trên của thời gian bắt đầu rẽ.
+
     min_traffic_sign_bound_area = config->get<int>("min_traffic_sign_bound_area");
     traffic_sign_valid_duration = config->get<int>("traffic_sign_valid_duration");
     speed_on_preparing_to_turn_trafficsign = config->get<float>("speed_on_preparing_to_turn_trafficsign");
@@ -170,7 +175,12 @@ void CarControl::driverCar(Road & road, const std::vector<TrafficSign> & traffic
         }
 
 
-        if (traffic_signs[0].rect.area() > min_traffic_sign_bound_area) {
+        if (traffic_signs[0].rect.area() > min_traffic_sign_bound_area
+            && (
+                traffic_signs[0].id == TrafficSign::SignType::TURN_LEFT
+                || traffic_signs[0].id == TrafficSign::SignType::TURN_RIGHT
+            )
+        ) {
 
             prepare_to_turn = true;
             last_sign_id = traffic_signs[0].id;
@@ -187,22 +197,38 @@ void CarControl::driverCar(Road & road, const std::vector<TrafficSign> & traffic
 
     // Khi nhận thấy đang có tín hiệu rẽ,
     // và diện tích đường mở rộng (đã đến ngã ba, ngã tư) thì thực hiện rẽ
-    if (prepare_to_turn && road.lane_area > lane_area_to_turn && Timer::calcTimePassed(last_sign_time_point) < traffic_sign_valid_duration) {
-        prepare_to_turn = false;
-        if (debug_flag) ROS_INFO_STREAM("TURNING: " << last_sign_id);
+    if ( prepare_to_turn && Timer::calcTimePassed(last_sign_time_point) < traffic_sign_valid_duration // Biển báo còn trong thời gian valid
+    ) {
+        // Check nếu xe đã chạy đến ngã ba, ngã tư (TH rẽ ở ngã ba, ngã tư)
+        // hoặc xe đã chạy đến thời gian phải rẽ (rẽ sau biển 1 khoảng thời gian)
+        Timer::time_duration_t traffic_sign_passed_time =  Timer::calcTimePassed(last_sign_time_point);
+        if (
+            (
+                turn_on_trafficsign_by_lane_area // Rẽ theo diện tích đường
+                && road.lane_area > lane_area_to_turn
+            ) || (
+                turn_on_trafficsign_by_passed_time // Rẽ theo thời gian biển đã qua
+                && traffic_sign_passed_time > traffic_sign_passed_time_lower_bound
+                && traffic_sign_passed_time < traffic_sign_passed_time_higher_bound
+            )
+        ) {
+            prepare_to_turn = false;
+            if (debug_flag) ROS_INFO_STREAM("TURNING: " << last_sign_id);
 
-        std::cout << "TURNING: " << last_sign_id << std::endl;
+            std::cout << "TURNING: " << last_sign_id << std::endl;
 
-        if (last_sign_id == TrafficSign::SignType::TURN_LEFT) {
-            turning_coeff = -turning_angle_on_trafficsign;
-        } else if (last_sign_id == TrafficSign::SignType::TURN_RIGHT) {
-            turning_coeff = +turning_angle_on_trafficsign;
+            if (last_sign_id == TrafficSign::SignType::TURN_LEFT) {
+                turning_coeff = -turning_angle_on_trafficsign;
+            } else if (last_sign_id == TrafficSign::SignType::TURN_RIGHT) {
+                turning_coeff = +turning_angle_on_trafficsign;
+            }
+            
+            speed_data = speed_on_turning_trafficsign;
+
+            turning_time_point = std::chrono::system_clock::now();
+            is_turning = true;
         }
-        
-        speed_data = speed_on_turning_trafficsign;
 
-        turning_time_point = std::chrono::system_clock::now();
-        is_turning = true;
     }
 
 

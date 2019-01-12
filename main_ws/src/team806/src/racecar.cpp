@@ -6,8 +6,10 @@
 #include <opencv2/highgui/highgui.hpp>
 #include <thread>
 
+#include <ros/console.h>
 #include "car_control.h"
 #include "config.h"
+#include "image_publisher.h"
 #include "lane_detector.h"
 #include "obstacle_detector.h"
 #include "road.h"
@@ -15,13 +17,9 @@
 #include "traffic_sign.h"
 #include "traffic_sign_detector.h"
 #include "traffic_sign_detector_2.h"
-#include "image_publisher.h"
-#include <ros/console.h>
 
 using namespace std;
 using namespace cv;
-
-
 
 // This flag turn to true on the first time receiving image from simulator
 bool racing = false;
@@ -61,18 +59,20 @@ Timer::time_point_t start_time_point;
 
 Mat markerMask;
 
-void setLabel(cv::Mat& im, const std::string label, const cv::Point & org)
-{
+void setLabel(cv::Mat &im, const std::string label, const cv::Point &org) {
     int fontface = cv::FONT_HERSHEY_SIMPLEX;
     double scale = 0.4;
     int thickness = 1;
     int baseline = 0;
 
-    cv::Size text = cv::getTextSize(label, fontface, scale, thickness, &baseline);
-    cv::rectangle(im, org + cv::Point(0, baseline), org + cv::Point(text.width, -text.height), CV_RGB(0,0,0), CV_FILLED);
-    cv::putText(im, label, org, fontface, scale, CV_RGB(0,255,0), thickness, 8);
+    cv::Size text =
+        cv::getTextSize(label, fontface, scale, thickness, &baseline);
+    cv::rectangle(im, org + cv::Point(0, baseline),
+                  org + cv::Point(text.width, -text.height), CV_RGB(0, 0, 0),
+                  CV_FILLED);
+    cv::putText(im, label, org, fontface, scale, CV_RGB(0, 255, 0), thickness,
+                8);
 }
-
 
 void drawResultRound1() {
     while (true) {
@@ -102,11 +102,12 @@ void drawResultRound1() {
         {
             std::lock_guard<std::mutex> guard(traffic_signs_mutex);
             for (int i = 0; i < traffic_signs.size(); ++i) {
-                rectangle(draw, traffic_signs[i].rect, Scalar(0,0,255), 2);
+                rectangle(draw, traffic_signs[i].rect, Scalar(0, 0, 255), 2);
                 std::string text;
                 if (traffic_signs[i].id == TrafficSign::SignType::TURN_LEFT) {
                     text = "turn_left";
-                } else if (traffic_signs[i].id == TrafficSign::SignType::TURN_RIGHT) {
+                } else if (traffic_signs[i].id ==
+                           TrafficSign::SignType::TURN_RIGHT) {
                     text = "turn_right";
                 }
                 setLabel(draw, text, traffic_signs[i].rect.tl());
@@ -117,7 +118,7 @@ void drawResultRound1() {
         {
             std::lock_guard<std::mutex> guard(obstacles_mutex);
             for (int i = 0; i < obstacles.size(); ++i) {
-                rectangle(draw, obstacles[i], Scalar(0,255,0), 3);
+                rectangle(draw, obstacles[i], Scalar(0, 255, 0), 3);
                 setLabel(draw, "obstruction", obstacles[i].tl());
             }
         }
@@ -209,7 +210,6 @@ void trafficSignThread() {
     Timer::time_duration_t thread_delay_time_step = 4;
 
     while (true) {
-
         // Copy current image
         cv::Mat img;
         {
@@ -240,42 +240,10 @@ void trafficSignThread() {
 
             last_trafficsign_detect_time = Timer::getCurrentTime();
         }
+
+        ROS_ERROR("LOI");
     }
 }
-
-
-// Experiement: Meanshift
-
-//This colors the segmentations
-void floodFillPostprocess( Mat& img, const Scalar& colorDiff=Scalar::all(1) )
-{
-    CV_Assert( !img.empty() );
-    RNG rng = theRNG();
-    Mat mask( img.rows+2, img.cols+2, CV_8UC1, Scalar::all(0) );
-    for( int y = 0; y < img.rows; y++ )
-    {
-        for( int x = 0; x < img.cols; x++ )
-        {
-            if( mask.at<uchar>(y+1, x+1) == 0 )
-            {
-                Scalar newVal( rng(256), rng(256), rng(256) );
-                floodFill( img, mask, Point(x,y), newVal, 0, colorDiff, colorDiff );
-            }
-        }
-    }
-}
-
-void meanShiftSegmentation( const cv::Mat & img, cv::Mat res )
-{
-    int spatialRad = 60, colorRad = 40, maxPyrLevel = 3;
-    cout << "spatialRad=" << spatialRad << "; "
-         << "colorRad=" << colorRad << "; "
-         << "maxPyrLevel=" << maxPyrLevel << endl;
-    pyrMeanShiftFiltering( img, res, spatialRad, colorRad, maxPyrLevel );
-    floodFillPostprocess( res, Scalar::all(2) );
-}
-
-
 
 Timer::time_point_t last_obstacle_detect_time;
 void obstacleDetectorThread() {
@@ -290,6 +258,60 @@ void obstacleDetectorThread() {
         {
             std::lock_guard<std::mutex> guard(current_img_mutex);
             img = current_img.clone();
+        }
+
+        // EXPERIMENTAL
+        cv::Mat lane_img;
+        {
+            std::lock_guard<std::mutex> guard(road_mutex);
+            img.copyTo(lane_img, road.lane_mask);
+        }
+
+        if (!lane_img.empty()) {
+            // cv::imshow("lane_img", lane_img);
+            // cv::waitKey(1);
+            // img_publisher->publishImage(experiment_img_pub, lane_img);
+
+            cv::Mat gray;
+            cv::Mat canny;
+            cvtColor(lane_img, gray, CV_BGR2GRAY);
+
+            lane_detector->perspectiveTransform(gray, gray);
+            img_publisher->publishImage(experiment_img_pub, gray);
+
+
+            Canny(lane_img, canny, 120, 200, 3);
+            // canny.convertTo(draw, CV_8U);
+            img_publisher->publishImage(experiment_img_pub_canny, canny);
+
+            // FLOODFILL THẦN THÁNH
+
+            int ffillMode = 1;  // 2: gradient fill, 1: Fixed Range floodfill
+
+            int connectivity = 4;  // or 8?
+            int newMaskVal = 255;
+            int flags = connectivity + (newMaskVal << 8) +
+                        (ffillMode == 1 ? cv::FLOODFILL_FIXED_RANGE : 0);
+
+            // Working in HSV color space
+            cv::Mat hsv;
+            cv::cvtColor(img, hsv, cv::COLOR_BGR2HSV);
+
+            int area;
+            cv::Point seed = cv::Point(180, 220);
+            cv::Scalar newVal(255);
+
+            int floodfill_lo = 20;
+            int floodfill_hi = 20;
+
+            // Flood fill
+            cv::Mat result;
+            cv::Mat mask = cv::Mat::zeros(
+                cv::Size(lane_img.cols + 2, lane_img.rows + 2), CV_8UC1);
+            cv::cvtColor(lane_img, result, cv::COLOR_BGR2GRAY);
+            area = cv::floodFill(result, mask, seed, newVal, 0, floodfill_lo,
+                                 floodfill_hi, flags);
+            // img_publisher->publishImage(experiment_img_pub, lane_img);
         }
 
         // Detect obstacle
@@ -348,7 +370,6 @@ void imageCallback(const sensor_msgs::ImageConstPtr &msg) {
 
     if (debug_show_fps) ROS_INFO_STREAM("Simulation speed: " << sim_speed);
 
-    
     // cout << "Simulation speed: " << sim_speed << endl;
 }
 
@@ -356,7 +377,8 @@ int main(int argc, char **argv) {
     ros::init(argc, argv, "team806_node");
     std::shared_ptr<Config> config = Config::getDefaultConfigInstance();
 
-    if( ros::console::set_logger_level(ROSCONSOLE_DEFAULT_NAME, ros::console::levels::Debug) ) {
+    if (ros::console::set_logger_level(ROSCONSOLE_DEFAULT_NAME,
+                                       ros::console::levels::Debug)) {
         ros::console::notifyLoggerLevelsChanged();
     }
 
@@ -364,9 +386,12 @@ int main(int argc, char **argv) {
     ROS_INFO("Ghi Log Info");
 
     img_publisher = std::make_shared<ImagePublisher>();
-    experiment_img_pub = img_publisher->createImagePublisher("experiment_img", 1);
-    experiment_img_pub_canny = img_publisher->createImagePublisher("experiment_img/canny", 1);
-    experiment_img_pub_meanshift = img_publisher->createImagePublisher("experiment_img/meanshift", 1);
+    experiment_img_pub =
+        img_publisher->createImagePublisher("experiment_img", 1);
+    experiment_img_pub_canny =
+        img_publisher->createImagePublisher("experiment_img/canny", 1);
+    experiment_img_pub_meanshift =
+        img_publisher->createImagePublisher("experiment_img/meanshift", 1);
 
     debug_show_fps = config->get<bool>("debug_show_fps");
 
@@ -405,7 +430,6 @@ int main(int argc, char **argv) {
 
     ros::MultiThreadedSpinner spinner(2);
     spinner.spin();
-
 
     cv::destroyAllWindows();
 }
