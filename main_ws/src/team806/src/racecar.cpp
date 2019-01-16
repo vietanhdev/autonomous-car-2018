@@ -33,7 +33,6 @@ bool debug_show_fps = false;
 
 std::shared_ptr<CarControl> car;
 std::shared_ptr<LaneDetector> lane_detector;
-// std::shared_ptr<ObstacleDetector> obstacle_detector;
 std::shared_ptr<TrafficSignDetector> sign_detector;
 std::shared_ptr<TrafficSignDetector2> sign_detector_2;
 std::shared_ptr<ObjectDetectorManager> object_detector_manager;
@@ -122,20 +121,24 @@ void drawResultRound1() {
             }
         }
 
+
         // Draw obstacles
         {
-            std::lock_guard<std::mutex> guard(obstacles_mutex);
-            for (int i = 0; i < obstacles.size(); ++i) {
-                rectangle(draw, obstacles[i], Scalar(0, 255, 0), 3);
-                setLabel(draw, "obstruction", obstacles[i].tl());
-            }
-        }
-        {
             std::lock_guard<std::mutex> guard(detected_objects_mutex);
+            
+            cv::Mat overlay; // overlay image to draw a transparent rectangles
+            double alpha = 0.3;
+
+            // copy the source image to an overlay
+            draw.copyTo(overlay);
+
             for (int i = 0; i < detected_objects.size(); ++i) {
-                rectangle(draw, detected_objects[i].rect, Scalar(0, 255, 0), 3);
+                cv::rectangle(overlay, detected_objects[i].rect, cv::Scalar(0, 0, 255), -1);
                 setLabel(draw, "obstruction", detected_objects[i].rect.tl());
             }
+
+            // blend the overlay with the draw
+            cv::addWeighted(overlay, alpha, draw, 1 - alpha, 0, draw);
         }
 
         imshow("RESULT", draw);
@@ -262,7 +265,7 @@ void trafficSignThread() {
 
 Timer::time_point_t last_obstacle_detect_time;
 void obstacleDetectorThread() {
-    float config_fps = 10;
+    float config_fps = 30;
     float current_fps;
     Timer::time_duration_t thread_delay_time = 0;
     Timer::time_duration_t thread_delay_time_step = 4;
@@ -286,22 +289,7 @@ void obstacleDetectorThread() {
                 detected_objects = objects;
             }
 
-            // cv::Mat draw = img.clone();
-
-            // for (int i = 0; i < objects.size(); ++i) {
-            //     cout << "DETECTED: " << objects[i].label << " >>> " << objects[i].weight << endl;
-            //     rectangle(draw, objects[i].rect, Scalar(0,255,0), 2);
-            // }
-
-            // img_publisher->publishImage(experiment_img_pub, draw);
-
-            std::vector<cv::Rect> detected_obstacles;
-            // obstacle_detector->detect(img, detected_obstacles);
-            // {
-            //     std::lock_guard<std::mutex> guard(obstacles_mutex);
-            //     obstacles = detected_obstacles;
-            // }
-
+         
             Timer::delay(thread_delay_time);
 
             current_fps =

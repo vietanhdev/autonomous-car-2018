@@ -27,7 +27,7 @@ class ObjectDetectorManager : ImagePublisher {
 
     std::vector <ObjectDetector*> detectors;
     size_t detector_iter = 0;
-    size_t num_of_detectors_each_global_search = 4;
+    size_t num_of_detectors_each_global_search = 5;
     size_t num_of_frames_bw_global_searchs = 0;
     size_t num_of_frames_to_global_search = 0;
 

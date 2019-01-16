@@ -21,7 +21,7 @@ traffic_sign_detector_svmfile: "/data/svm_an_linear.xml"
 
 
 # ==== Traffic Sign detector 2 ====
-use_traffic_sign_detector_2: false
+use_traffic_sign_detector_2: true
 traffic_sign_detector_2_svmfile: "/data/svm_an_linear.xml"
 traffic_sign_detector_2_colorfile: "/data/blue.color"
 

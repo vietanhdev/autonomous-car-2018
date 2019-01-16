@@ -9,6 +9,12 @@ ObjectDetectorManager::ObjectDetectorManager() {
                 "/data/object_hog_files/object1.yml",
             2.1)));
     detectors.push_back(
+        dynamic_cast<ObjectDetector *>(new HogBasedObjectDetector(
+            DetectedObject::ObjectLabel::OBJECT_1,
+            ros::package::getPath(config->getROSPackage()) +
+                "/data/object_hog_files/object1_an.yml",
+            0.8)));
+    detectors.push_back(
         dynamic_cast<ObjectDetector *>(new TemplMatchingObjectDetector(
             DetectedObject::ObjectLabel::OBJECT_1,
             ros::package::getPath(config->getROSPackage()) +
@@ -119,7 +125,7 @@ void ObjectDetectorManager::filterNewDetectedObjects(
     output_list.clear();
     for (size_t i = 0; i < detected_objects.size(); ++i) {
 
-        std::cout << i << " : " << std::bitset<32>(detected_objects[i].hit_history) << std::endl;
+        // std::cout << i << " : " << std::bitset<32>(detected_objects[i].hit_history) << std::endl;
 
         // If we detect 3/5 last frame, we trust the result
         if (countNonZeroBits(detected_objects[i].hit_history, 5) >= 2) {
