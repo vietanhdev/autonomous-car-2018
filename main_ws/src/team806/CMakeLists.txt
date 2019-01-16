@@ -47,8 +47,6 @@ add_executable(${PROJECT_NAME}_node
   src/traffic_sign/traffic_sign.cpp
   src/traffic_sign/traffic_sign_detector.cpp
   src/traffic_sign/traffic_sign_detector_2.cpp
-  src/obstacle_detector/obstacle_detector.cpp
-
   src/object_detector/detected_object.cpp
   src/object_detector/hog_based_object_detector.cpp
   src/object_detector/object_detector_manager.cpp
