@@ -63,9 +63,9 @@ quick_start_speed: 80
 quick_start_time: 5000
 
 # Increase speed!!!
-duration_speedup_after_traffic_sign_1: 5000
+duration_speedup_after_traffic_sign_1: 3000
 speed_on_speedup_after_traffic_sign_1: 80
-duration_speedup_after_traffic_sign_2: 5000
+duration_speedup_after_traffic_sign_2: 3000
 speed_on_speedup_after_traffic_sign_2: 80
 
 
