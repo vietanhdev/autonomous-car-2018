@@ -2,12 +2,12 @@
 
 ObjectDetectorManager::ObjectDetectorManager() {
     // Init detectors
-    detectors.push_back(
-        dynamic_cast<ObjectDetector *>(new HogBasedObjectDetector(
-            DetectedObject::ObjectLabel::OBJECT_1,
-            ros::package::getPath(config->getROSPackage()) +
-                "/data/object_hog_files/object1.yml",
-            2.1)));
+    // detectors.push_back(
+    //     dynamic_cast<ObjectDetector *>(new HogBasedObjectDetector(
+    //         DetectedObject::ObjectLabel::OBJECT_1,
+    //         ros::package::getPath(config->getROSPackage()) +
+    //             "/data/object_hog_files/object1.yml",
+    //         2.1)));
     detectors.push_back(
         dynamic_cast<ObjectDetector *>(new HogBasedObjectDetector(
             DetectedObject::ObjectLabel::OBJECT_1,
