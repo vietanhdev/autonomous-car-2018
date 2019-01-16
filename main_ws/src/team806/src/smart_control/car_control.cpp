@@ -52,6 +52,13 @@ void CarControl::readConfig() {
 
 
     middle_point_adjustment = config->get<int>("middle_point_adjustment");
+
+
+    // SpeedUp!!!
+    duration_speedup_after_traffic_sign_1 = config->get<int>("duration_speedup_after_traffic_sign_1");
+    speed_on_speedup_after_traffic_sign_1 = config->get<int>("speed_on_speedup_after_traffic_sign_1");
+    duration_speedup_after_traffic_sign_2 = config->get<int>("duration_speedup_after_traffic_sign_2");
+    speed_on_speedup_after_traffic_sign_2 = config->get<int>("speed_on_speedup_after_traffic_sign_2");
     
 
    
@@ -93,6 +100,15 @@ void CarControl::publishSignal(float speed_data, float angle_data) {
             speed.data = quick_start_speed;
             std::cout << "Quick Start" << std::endl;
         }
+
+
+        // Control speed up
+        if (num_of_crossed_trafficsign == 1 && Timer::calcTimePassed(crossed_traffic_sign_1_time_point) < duration_speedup_after_traffic_sign_1) {
+            speed.data = speed_on_speedup_after_traffic_sign_1;
+        } else if (num_of_crossed_trafficsign == 2 && Timer::calcTimePassed(crossed_traffic_sign_2_time_point) < duration_speedup_after_traffic_sign_2) {
+            speed.data = speed_on_speedup_after_traffic_sign_2;
+        }
+
 
         steer_publisher.publish(angle);
         speed_publisher.publish(speed);
@@ -236,10 +252,18 @@ void CarControl::driverCar(Road & road, const std::vector<TrafficSign> & traffic
         ROS_INFO_STREAM("turning_coeff: " << turning_coeff);
     }
 
+
+    // Triggle turning to bring car back to normal state
     if (Timer::calcTimePassed(turning_time_point) > turning_duration_trafficsign && is_turning) {
         turning_coeff = 0;
         is_turning = false;
         ++num_of_crossed_trafficsign;
+
+        // Save time point of crossed traffic signs for speedup
+        if (num_of_crossed_trafficsign == 1)
+            crossed_traffic_sign_1_time_point = Timer::getCurrentTime();
+        else if (num_of_crossed_trafficsign == 2)
+            crossed_traffic_sign_2_time_point = Timer::getCurrentTime();
     }
 
     // if (num_of_crossed_trafficsign > 0) {

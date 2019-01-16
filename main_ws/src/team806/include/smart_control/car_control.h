@@ -150,6 +150,17 @@ private:
     Timer::time_duration_t turning_duration_trafficsign = 1000;
 
 
+
+    // ======================== SPEEDUP!!! ==============================
+    Timer::time_duration_t duration_speedup_after_traffic_sign_1 = 0;
+    float speed_on_speedup_after_traffic_sign_1 = 80;
+    Timer::time_point_t crossed_traffic_sign_1_time_point;
+
+    Timer::time_duration_t duration_speedup_after_traffic_sign_2 = 0;
+    float speed_on_speedup_after_traffic_sign_2 = 80;
+    Timer::time_point_t crossed_traffic_sign_2_time_point;
+
+
     float last_speed_data, last_angle_data;
 
     void readConfig();
