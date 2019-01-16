@@ -44,7 +44,7 @@ int HogBasedObjectDetector::detect(
     hog.detectMultiScale(img, foundLocations, weights, this->threshold, this->winstride);
 
     // Detect "Not MultiScale"
-    hog.detect(img, foundPoints, weights, this->threshold, this->winstride);
+    // hog.detect(img, foundPoints, weights, this->threshold, this->winstride);
     // for (int i = 0; i < foundPoints.size(); ++i) {
     //     foundLocations.push_back(
     //     cv::Rect(foundPoints[i],
