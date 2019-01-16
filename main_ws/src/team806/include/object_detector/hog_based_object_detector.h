@@ -27,9 +27,9 @@ class HogBasedObjectDetector : public ObjectDetector {
     double threshold;
 
 
-    HogBasedObjectDetector(DetectedObject::ObjectLabel label, cv::HOGDescriptor hog);
-    HogBasedObjectDetector(DetectedObject::ObjectLabel label, const std::string & hog_file);
-    HogBasedObjectDetector(DetectedObject::ObjectLabel label, const std::string & hog_file, double threshold);
+    HogBasedObjectDetector(DetectedObject::ObjectLabel label, cv::HOGDescriptor hog, cv::Size winstride = cv::Size(4,4));
+    HogBasedObjectDetector(DetectedObject::ObjectLabel label, const std::string & hog_file, cv::Size winstride = cv::Size(4,4));
+    HogBasedObjectDetector(DetectedObject::ObjectLabel label, const std::string & hog_file, double threshold, cv::Size winstride = cv::Size(4,4));
 
 
     // Detect the objects

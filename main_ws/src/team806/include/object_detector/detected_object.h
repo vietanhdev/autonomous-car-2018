@@ -12,11 +12,13 @@
 class DetectedObject {
 
    public:
-    enum ObjectLabel { TURN_LEFT_SIGN, TURN_RIGHT_SIGN, OBJECT_1, OBJECT_2 };
+    enum ObjectLabel { TURN_LEFT_SIGN = 1, TURN_RIGHT_SIGN = 2, OBJECT_1 = 3, OBJECT_2 = 4 };
 
     ObjectLabel label;
     cv::Rect rect;
-    double weight; 
+    double weight;
+
+    unsigned int hit_history = 1; // Hit/miss history in binary
 
     DetectedObject(ObjectLabel label, cv::Rect rect);
     DetectedObject(ObjectLabel label, cv::Rect rect, double weight);

@@ -265,41 +265,16 @@ void obstacleDetectorThread() {
             img = current_img.clone();
         }
 
-        // EXPERIMENTAL
-        cv::Mat lane_img;
-        {
-            std::lock_guard<std::mutex> guard(road_mutex);
-            img.copyTo(lane_img, road.lane_mask);
-        }
-
-        if (!lane_img.empty()) {
-            // cv::imshow("lane_img", lane_img);
-            // cv::waitKey(1);
-            // img_publisher->publishImage(experiment_img_pub, lane_img);
-
-            cv::Mat gray;
-            cv::Mat canny;
-            cvtColor(lane_img, gray, CV_BGR2GRAY);
-
-            // lane_detector->perspectiveTransform(gray, gray);
-            // img_publisher->publishImage(experiment_img_pub, gray);
-
-
-            Canny(lane_img, canny, 120, 200, 3);
-            // canny.convertTo(draw, CV_8U);
-            img_publisher->publishImage(experiment_img_pub_canny, canny);
-
-
+        if (!img.empty()) {
             vector<DetectedObject> objects;
             object_detector_manager->detect(img, objects);
 
             cv::Mat draw = img.clone();
 
             for (int i = 0; i < objects.size(); ++i) {
-                cout << "DETECTED: " << objects[i].label << endl;
+                cout << "DETECTED: " << objects[i].label << " >>> " << objects[i].weight << endl;
                 rectangle(draw, objects[i].rect, Scalar(0,255,0), 2);
             }
-
 
             img_publisher->publishImage(experiment_img_pub, draw);
         }
@@ -412,9 +387,6 @@ int main(int argc, char **argv) {
     image_transport::ImageTransport it(nh);
     image_transport::Subscriber sub =
         it.subscribe(config->getTeamName() + "_image", 1, imageCallback);
-
-
-    Timer::delay(3000);
 
     std::thread round_1_result_thread(drawResultRound1);
     std::thread lane_detector_thread(laneDetectorThread);

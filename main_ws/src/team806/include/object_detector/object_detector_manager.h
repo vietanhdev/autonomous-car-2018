@@ -1,6 +1,7 @@
 #ifndef OBJECT_DETECTOR_MANAGER_H
 #define OBJECT_DETECTOR_MANAGER_H
 
+#include <bitset>
 #include <dirent.h>
 #include <limits.h>
 #include <ros/package.h>
@@ -49,6 +50,16 @@ class ObjectDetectorManager : ImagePublisher {
      // Return the number of obstacles in the input image
      int detect(const cv::Mat &img,
             std::vector<DetectedObject> &detected_objects);
+
+    // Filter new detected object.
+    // Merge the result if new object is the same one as a detected one
+    // Or update the results
+    void filterNewDetectedObjects(std::vector<DetectedObject> new_detected_objects, std::vector<DetectedObject> &output_list);
+
+    // Count bit 1 from the last position of an unsigned number
+    // input: n: number; num_of_last_bit_to_count: number of bits to count from the last bit
+    int countNonZeroBits(unsigned int n, unsigned int num_of_last_bit_to_count);
+
 };
 
 #endif

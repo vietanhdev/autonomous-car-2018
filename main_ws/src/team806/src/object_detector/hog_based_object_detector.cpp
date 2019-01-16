@@ -4,74 +4,50 @@ using namespace std;
 using namespace cv;
 
 HogBasedObjectDetector::HogBasedObjectDetector(
-    DetectedObject::ObjectLabel label, cv::HOGDescriptor hog) {
+    DetectedObject::ObjectLabel label, cv::HOGDescriptor hog, cv::Size winstride) {
     this->label = label;
     this->hog = hog;
-    winstride = cv::Size(4, 4);
+    this->winstride = winstride;
 }
 
 HogBasedObjectDetector::HogBasedObjectDetector(
-    DetectedObject::ObjectLabel label, const std::string &hog_file) {
+    DetectedObject::ObjectLabel label, const std::string &hog_file, cv::Size winstride) {
     hog.load(hog_file);
-    winstride = cv::Size(4, 4);
+    this->winstride = winstride;
 }
 
 HogBasedObjectDetector::HogBasedObjectDetector(
     DetectedObject::ObjectLabel label, const std::string &hog_file,
-    double threshold) {
-    std::cout << hog_file << std::endl;
+    double threshold, cv::Size winstride) {
 
-    // hog.load(hog_file);
-    hog = cv::HOGDescriptor(cv::Size(32, 32),  // winSize
-                            cv::Size(8, 8),    // blocksize
-                            cv::Size(4, 4),    // blockStride,
-                            cv::Size(2, 2),    // cellSize,
-                            9,                 // nbins,
-                            1,                 // derivAper,
-                            -1,                // winSigma,
-                            0,                 // histogramNormType,
-                            0.2,               // L2HysThresh,
-                            1,                 // gamma correction,
-                            64,                // nlevels=64
-                            1                  //_signedGradient = true
-    );
-    std::cout << hog.load(
-                     "/mnt/DATA/Works/CuocDuaSo/main_ws/src/team806/data/"
-                     "object_hog_files/object1.yml")
-              << std::endl;
-    std::cout << hog.winSize;
+    hog.load(hog_file);
     this->threshold = threshold;
-    winstride = cv::Size(4, 4);
+    this->winstride = winstride;
+
 }
 
 // Detect the objects
 // Return the number of objects in the input image
 int HogBasedObjectDetector::detect(
     const cv::Mat &img, std::vector<DetectedObject> &detected_objects) {
-    if (img.empty()) return 0;
 
     // Clear result vector
     detected_objects.clear();
+    if (img.empty()) return 0;
 
     std::vector<cv::Point> foundPoints;
     std::vector<cv::Rect> foundLocations;
     std::vector<double> weights;
 
-    // cv::imwrite("debug.png", img);
-    cv::Mat gray;
-    cv::cvtColor(img, gray, COLOR_BGR2GRAY);
-    // cv::imwrite("gray.png", gray);
-    cv::resize(gray, gray, cv::Size(320, 240));
-    // std::cout << " winSize: " << hog.winSize;
 
-    hog.detectMultiScale(gray, foundLocations, weights, 2.3, winstride);
+    hog.detect(img, foundPoints, weights, this->threshold, this->winstride);
 
-    // for (int i = 0; i < foundPoints.size(); ++i) {
-    //     foundLocations.push_back(
-    //     cv::Rect(foundPoints[i],
-    //         cv::Point(foundPoints[i].x + 32, foundPoints[i].y + 32))
-    //     );
-    // }
+    for (int i = 0; i < foundPoints.size(); ++i) {
+        foundLocations.push_back(
+        cv::Rect(foundPoints[i],
+            cv::Point(foundPoints[i].x + 32, foundPoints[i].y + 32))
+        );
+    }
 
     if (!foundLocations.empty()) {
         for (int i = 0; i < foundLocations.size(); ++i) {
@@ -82,7 +58,7 @@ int HogBasedObjectDetector::detect(
             // Scalar(0,255,0), 1);
 
             detected_objects.push_back(
-                DetectedObject(this->label, foundLocations[i]));
+                DetectedObject(this->label, foundLocations[i], weights[i]));
         }
     }
 
