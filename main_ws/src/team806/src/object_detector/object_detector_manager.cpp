@@ -68,14 +68,12 @@ void ObjectDetectorManager::filterNewDetectedObjects(
                          detected_objects[j].rect)
                             .area() << std::endl;
 
-            if (static_cast<double>(
-                    (new_detected_objects[i].rect & detected_objects[j].rect)
-                        .area()) /
-                        (new_detected_objects[i].rect |
-                         detected_objects[j].rect)
-                            .area() >
-                    0 &&
-                new_detected_objects[i].label == detected_objects[j].label) {
+            if (
+                (   static_cast<double>((new_detected_objects[i].rect & detected_objects[j].rect) .area()) 
+                        / (new_detected_objects[i].rect | detected_objects[j].rect).area() > 0 
+                    || cv::norm(new_detected_objects[i].rect.tl()-detected_objects[j].rect.tl()) < 20
+                )
+                && new_detected_objects[i].label == detected_objects[j].label) {
                 is_old_object = true;
 
 
@@ -125,10 +123,10 @@ void ObjectDetectorManager::filterNewDetectedObjects(
     output_list.clear();
     for (size_t i = 0; i < detected_objects.size(); ++i) {
 
-        // std::cout << i << " : " << std::bitset<32>(detected_objects[i].hit_history) << std::endl;
+        std::cout << i << " : " << std::bitset<32>(detected_objects[i].hit_history) << std::endl;
 
         // If we detect 3/5 last frame, we trust the result
-        if (countNonZeroBits(detected_objects[i].hit_history, 5) >= 2) {
+        if (countNonZeroBits(detected_objects[i].hit_history, 5) >= 3) {
             output_list.push_back(detected_objects[i]);
         }
     }
