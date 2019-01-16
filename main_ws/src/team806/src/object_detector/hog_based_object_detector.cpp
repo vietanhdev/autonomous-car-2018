@@ -12,6 +12,7 @@ HogBasedObjectDetector::HogBasedObjectDetector(
 
 HogBasedObjectDetector::HogBasedObjectDetector(
     DetectedObject::ObjectLabel label, const std::string &hog_file, cv::Size winstride) {
+    this->label = label;
     hog.load(hog_file);
     this->winstride = winstride;
 }
@@ -19,7 +20,7 @@ HogBasedObjectDetector::HogBasedObjectDetector(
 HogBasedObjectDetector::HogBasedObjectDetector(
     DetectedObject::ObjectLabel label, const std::string &hog_file,
     double threshold, cv::Size winstride) {
-
+    this->label = label;
     hog.load(hog_file);
     this->threshold = threshold;
     this->winstride = winstride;

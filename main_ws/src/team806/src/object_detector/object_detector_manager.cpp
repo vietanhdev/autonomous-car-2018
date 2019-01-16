@@ -8,6 +8,24 @@ ObjectDetectorManager::ObjectDetectorManager() {
             ros::package::getPath(config->getROSPackage()) +
                 "/data/object_hog_files/object1.yml",
             2.1)));
+    detectors.push_back(
+        dynamic_cast<ObjectDetector *>(new TemplMatchingObjectDetector(
+            DetectedObject::ObjectLabel::OBJECT_1,
+            ros::package::getPath(config->getROSPackage()) +
+                "/data/object_templates/1",
+            0.8)));
+    detectors.push_back(
+        dynamic_cast<ObjectDetector *>(new TemplMatchingObjectDetector(
+            DetectedObject::ObjectLabel::OBJECT_2,
+            ros::package::getPath(config->getROSPackage()) +
+                "/data/object_templates/2",
+            0.8)));
+     detectors.push_back(
+        dynamic_cast<ObjectDetector *>(new TemplMatchingObjectDetector(
+            DetectedObject::ObjectLabel::OBJECT_3,
+            ros::package::getPath(config->getROSPackage()) +
+                "/data/object_templates/3",
+            0.8)));
 }
 
 // Filter new detected object.
@@ -53,6 +71,10 @@ void ObjectDetectorManager::filterNewDetectedObjects(
                     0 &&
                 new_detected_objects[i].label == detected_objects[j].label) {
                 is_old_object = true;
+
+
+                // Update the position of the object
+                detected_objects[j].rect = new_detected_objects[i].rect;
 
                 // Update old object detection result (hit_history)
                 detected_objects[j].hit_history <<= 1;

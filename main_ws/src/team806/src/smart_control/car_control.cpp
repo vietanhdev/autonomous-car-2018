@@ -170,9 +170,9 @@ void CarControl::driverCar(Road & road, const std::vector<TrafficSign> & traffic
 
         if (debug_flag) ROS_INFO_STREAM("TRAFFIC SIGN DETECTED!: " << "Number: " << traffic_signs.size());
 
-        // for (int i = 0; i < traffic_signs.size(); ++i) {
-        //     std::cout << traffic_signs[i].id << " : " << traffic_signs[i].rect << std::endl;
-        // }
+        for (int i = 0; i < traffic_signs.size(); ++i) {
+            std::cout << traffic_signs[i].id << " : " << traffic_signs[i].rect << std::endl;
+        }
 
 
         if (traffic_signs[0].rect.area() > min_traffic_sign_bound_area

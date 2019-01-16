@@ -12,7 +12,7 @@
 class DetectedObject {
 
    public:
-    enum ObjectLabel { TURN_LEFT_SIGN = 1, TURN_RIGHT_SIGN = 2, OBJECT_1 = 3, OBJECT_2 = 4 };
+    enum ObjectLabel { OBJECT_1 = 1, OBJECT_2 = 2, OBJECT_3 = 3, TURN_LEFT_SIGN = 4, TURN_RIGHT_SIGN = 5};
 
     ObjectLabel label;
     cv::Rect rect;

@@ -17,6 +17,7 @@
 #include "image_publisher.h"
 #include "object_detector.h"
 #include "hog_based_object_detector.h"
+#include "templ_matching_object_detector.h"
 
 class ObjectDetectorManager : ImagePublisher {
    public:
@@ -26,7 +27,7 @@ class ObjectDetectorManager : ImagePublisher {
 
     std::vector <ObjectDetector*> detectors;
     size_t detector_iter = 0;
-    size_t num_of_detectors_each_global_search = 1;
+    size_t num_of_detectors_each_global_search = 4;
     size_t num_of_frames_bw_global_searchs = 0;
     size_t num_of_frames_to_global_search = 0;
 

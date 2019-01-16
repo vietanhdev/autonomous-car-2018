@@ -57,6 +57,9 @@ std::vector<TrafficSign> traffic_signs;
 std::mutex obstacles_mutex;
 std::vector<cv::Rect> obstacles;
 
+std::mutex detected_objects_mutex;
+std::vector<DetectedObject> detected_objects;
+
 // To calculate the speed of image transporting
 // ==> The speed of the hold system => Adjust the car controlling params
 long long int num_of_frames = 0;
@@ -125,6 +128,13 @@ void drawResultRound1() {
             for (int i = 0; i < obstacles.size(); ++i) {
                 rectangle(draw, obstacles[i], Scalar(0, 255, 0), 3);
                 setLabel(draw, "obstruction", obstacles[i].tl());
+            }
+        }
+        {
+            std::lock_guard<std::mutex> guard(detected_objects_mutex);
+            for (int i = 0; i < detected_objects.size(); ++i) {
+                rectangle(draw, detected_objects[i].rect, Scalar(0, 255, 0), 3);
+                setLabel(draw, "obstruction", detected_objects[i].rect.tl());
             }
         }
 
@@ -266,21 +276,25 @@ void obstacleDetectorThread() {
         }
 
         if (!img.empty()) {
+
             vector<DetectedObject> objects;
             object_detector_manager->detect(img, objects);
-
-            cv::Mat draw = img.clone();
-
-            for (int i = 0; i < objects.size(); ++i) {
-                cout << "DETECTED: " << objects[i].label << " >>> " << objects[i].weight << endl;
-                rectangle(draw, objects[i].rect, Scalar(0,255,0), 2);
+            
+            // Update the result
+            {
+                std::lock_guard<std::mutex> guard(detected_objects_mutex);
+                detected_objects = objects;
             }
 
-            img_publisher->publishImage(experiment_img_pub, draw);
-        }
+            // cv::Mat draw = img.clone();
 
-        // Detect obstacle
-        if (!img.empty()) {
+            // for (int i = 0; i < objects.size(); ++i) {
+            //     cout << "DETECTED: " << objects[i].label << " >>> " << objects[i].weight << endl;
+            //     rectangle(draw, objects[i].rect, Scalar(0,255,0), 2);
+            // }
+
+            // img_publisher->publishImage(experiment_img_pub, draw);
+
             std::vector<cv::Rect> detected_obstacles;
             // obstacle_detector->detect(img, detected_obstacles);
             // {
