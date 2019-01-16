@@ -17,9 +17,13 @@
 #include "traffic_sign.h"
 #include "traffic_sign_detector.h"
 #include "traffic_sign_detector_2.h"
+#include "opencv2/ximgproc/segmentation.hpp"
+#include "object_detector_manager.h"
+
 
 using namespace std;
 using namespace cv;
+using namespace cv::ximgproc::segmentation;
 
 // This flag turn to true on the first time receiving image from simulator
 bool racing = false;
@@ -29,9 +33,10 @@ bool debug_show_fps = false;
 
 std::shared_ptr<CarControl> car;
 std::shared_ptr<LaneDetector> lane_detector;
-std::shared_ptr<ObstacleDetector> obstacle_detector;
+// std::shared_ptr<ObstacleDetector> obstacle_detector;
 std::shared_ptr<TrafficSignDetector> sign_detector;
 std::shared_ptr<TrafficSignDetector2> sign_detector_2;
+std::shared_ptr<ObjectDetectorManager> object_detector_manager;
 
 std::shared_ptr<ImagePublisher> img_publisher;
 image_transport::Publisher experiment_img_pub;
@@ -276,52 +281,37 @@ void obstacleDetectorThread() {
             cv::Mat canny;
             cvtColor(lane_img, gray, CV_BGR2GRAY);
 
-            lane_detector->perspectiveTransform(gray, gray);
-            img_publisher->publishImage(experiment_img_pub, gray);
+            // lane_detector->perspectiveTransform(gray, gray);
+            // img_publisher->publishImage(experiment_img_pub, gray);
 
 
             Canny(lane_img, canny, 120, 200, 3);
             // canny.convertTo(draw, CV_8U);
             img_publisher->publishImage(experiment_img_pub_canny, canny);
 
-            // FLOODFILL THẦN THÁNH
 
-            int ffillMode = 1;  // 2: gradient fill, 1: Fixed Range floodfill
+            vector<DetectedObject> objects;
+            object_detector_manager->detect(img, objects);
 
-            int connectivity = 4;  // or 8?
-            int newMaskVal = 255;
-            int flags = connectivity + (newMaskVal << 8) +
-                        (ffillMode == 1 ? cv::FLOODFILL_FIXED_RANGE : 0);
+            cv::Mat draw = img.clone();
 
-            // Working in HSV color space
-            cv::Mat hsv;
-            cv::cvtColor(img, hsv, cv::COLOR_BGR2HSV);
+            for (int i = 0; i < objects.size(); ++i) {
+                cout << "DETECTED: " << objects[i].label << endl;
+                rectangle(draw, objects[i].rect, Scalar(0,255,0), 2);
+            }
 
-            int area;
-            cv::Point seed = cv::Point(180, 220);
-            cv::Scalar newVal(255);
 
-            int floodfill_lo = 20;
-            int floodfill_hi = 20;
-
-            // Flood fill
-            cv::Mat result;
-            cv::Mat mask = cv::Mat::zeros(
-                cv::Size(lane_img.cols + 2, lane_img.rows + 2), CV_8UC1);
-            cv::cvtColor(lane_img, result, cv::COLOR_BGR2GRAY);
-            area = cv::floodFill(result, mask, seed, newVal, 0, floodfill_lo,
-                                 floodfill_hi, flags);
-            // img_publisher->publishImage(experiment_img_pub, lane_img);
+            img_publisher->publishImage(experiment_img_pub, draw);
         }
 
         // Detect obstacle
         if (!img.empty()) {
             std::vector<cv::Rect> detected_obstacles;
-            obstacle_detector->detect(img, detected_obstacles);
-            {
-                std::lock_guard<std::mutex> guard(obstacles_mutex);
-                obstacles = detected_obstacles;
-            }
+            // obstacle_detector->detect(img, detected_obstacles);
+            // {
+            //     std::lock_guard<std::mutex> guard(obstacles_mutex);
+            //     obstacles = detected_obstacles;
+            // }
 
             Timer::delay(thread_delay_time);
 
@@ -382,8 +372,6 @@ int main(int argc, char **argv) {
         ros::console::notifyLoggerLevelsChanged();
     }
 
-    ROS_ERROR("Ghi Log Error");
-    ROS_INFO("Ghi Log Info");
 
     img_publisher = std::make_shared<ImagePublisher>();
     experiment_img_pub =
@@ -397,8 +385,8 @@ int main(int argc, char **argv) {
 
     lane_detector = std::shared_ptr<LaneDetector>(new LaneDetector());
 
-    obstacle_detector =
-        std::shared_ptr<ObstacleDetector>(new ObstacleDetector());
+    // obstacle_detector =
+    //     std::shared_ptr<ObstacleDetector>(new ObstacleDetector());
 
     use_traffic_sign_detector_2 =
         config->get<bool>("use_traffic_sign_detector_2");
@@ -412,6 +400,9 @@ int main(int argc, char **argv) {
 
     car = std::shared_ptr<CarControl>(new CarControl());
 
+    object_detector_manager = std::shared_ptr<ObjectDetectorManager>(new ObjectDetectorManager());
+
+
     // SET DEBUG OPTIONS
     car->debug_flag = config->get<bool>("debug_car_control");
 
@@ -421,6 +412,9 @@ int main(int argc, char **argv) {
     image_transport::ImageTransport it(nh);
     image_transport::Subscriber sub =
         it.subscribe(config->getTeamName() + "_image", 1, imageCallback);
+
+
+    Timer::delay(3000);
 
     std::thread round_1_result_thread(drawResultRound1);
     std::thread lane_detector_thread(laneDetectorThread);

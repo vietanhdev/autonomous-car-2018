@@ -27,6 +27,7 @@ include_directories(
   include/obstacle_detector
   include/traffic_sign
   include/smart_control
+  include/object_detector
   ${catkin_INCLUDE_DIRS}
 )
 
@@ -47,6 +48,11 @@ add_executable(${PROJECT_NAME}_node
   src/traffic_sign/traffic_sign_detector.cpp
   src/traffic_sign/traffic_sign_detector_2.cpp
   src/obstacle_detector/obstacle_detector.cpp
+
+  src/object_detector/detected_object.cpp
+  src/object_detector/hog_based_object_detector.cpp
+  src/object_detector/object_detector_manager.cpp
+
 )
 
 add_dependencies(${PROJECT_NAME}_node ${catkin_EXPORTED_TARGETS})
