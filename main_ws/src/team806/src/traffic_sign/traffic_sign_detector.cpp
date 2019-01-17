@@ -152,6 +152,7 @@ void TrafficSignDetector::BrightnessAndContrastAuto(cv::Mat src, cv::Mat &dst, b
         float max = accumulator.back();
         clipHistPercent *= (max / 100.0); //make percent as absolute
         clipHistPercent /= 2.0; // left and right wings
+
         // locate left cut
         minGray = 0;
         while (accumulator[minGray] < clipHistPercent)
@@ -251,9 +252,9 @@ void TrafficSignDetector::extendRect(cv::Rect &rect, int extend_dist){
 
 bool TrafficSignDetector::checkSimilarityRect(cv::Rect A, cv::Rect B){
 	float x = (float)(A|B).area();
-	float y = (float)A.area() + (float)B.area() - (float)(A&B).area();
+	float y = (float)(A&B).area();
 	float ratio = x / y;
-	if( ratio < eps_diff ){
+	if( ratio > eps_diff ){
 		return true;
 	}
 	return false;
@@ -292,40 +293,6 @@ void TrafficSignDetector::updatePrevRect(){
 
 }
 
-void TrafficSignDetector::filterByHist(){
-
-    auto it = std::begin(record.curr_rects);
-
-    // delete low probability rects
-    while(it != std::end(record.curr_rects)) {
-        int total = 0;
-        int same_result = 0;
-        
-        TrafficSign curr = *it;
-        
-        for(size_t j=0; j<record.prev_rects.size(); j++){
-            TrafficSign prev = record.prev_rects[j];
-            if( checkSimilarityRect(curr.rect, prev.rect) ) {
-                total++;
-                if(curr.id == prev.id){
-                    same_result++;
-                }
-            }
-        }
-
-        std::cout << "same result " << same_result << " and total " << total << std::endl;
-        // float min_right = (float)total * min_prob;
-        // std::cout << "min right " << min_right << std::endl;
-
-        // if(total >= min_prev_check && same_result >= min_right){
-        //     ++it;
-        // } else {
-        //     it = record.curr_rects.erase(it);
-        // }
-    }
-
-}
-
 void TrafficSignDetector::recognize(const cv::Mat & input, std::vector<TrafficSign> &traffic_signs, cv::Mat & draw, bool draw_result){
 
     cv::Mat frame = input.clone();
@@ -352,7 +319,7 @@ void TrafficSignDetector::recognize(const cv::Mat & input, std::vector<TrafficSi
     }
     mergeRects(bound_rects);
 
-    // Filter bound_rects by height and width
+    // Filter bound_rects by height and width and add to current rects
     for(size_t i=0; i<bound_rects.size(); i++){
     	float width = bound_rects[i].width;
     	float height = bound_rects[i].height;
@@ -365,7 +332,6 @@ void TrafficSignDetector::recognize(const cv::Mat & input, std::vector<TrafficSi
     }
 
 	classifyCurrRect();
-    // filterByHist();
 
     // Return value to traffic_signs
     traffic_signs.clear();
@@ -383,9 +349,9 @@ void TrafficSignDetector::recognize(const cv::Mat & input, std::vector<TrafficSi
             }
         }
 
-        std::cout << "same result " << same_id<< " and total " << total << std::endl;
+        // std::cout << "same result " << same_id<< " and total " << total << std::endl;
         int min_right = (int) (total * min_prob + 1);
-        std::cout << "min right " << min_right << std::endl;
+        // std::cout << "min right " << min_right << std::endl;
 
         if(total >= min_prev_check && same_id >= min_right) {
             traffic_signs.push_back(curr);
@@ -394,6 +360,8 @@ void TrafficSignDetector::recognize(const cv::Mat & input, std::vector<TrafficSi
 
     updatePrevRect();
 
+
+    // show result
     if(draw_result){
         for(size_t i=0; i<traffic_signs.size(); i++){
             if(traffic_signs[i].id != 0){
@@ -401,39 +369,23 @@ void TrafficSignDetector::recognize(const cv::Mat & input, std::vector<TrafficSi
                 int y = traffic_signs[i].rect.tl().y;
                 std::string text = traffic_signs[i].id == 1? "turn_left":"turn_right";
                 putText(draw, text, cv::Point(x, y), cv::FONT_HERSHEY_PLAIN, 1.0, CV_RGB(255,0,255), 2.0);
-                std::cout << text << " at [" << x << ", " << y << "] with area " << traffic_signs[i].rect.area() << std::endl;
+                // std::cout << text << " at [" << x << ", " << y << "] with area " << traffic_signs[i].rect.area() << std::endl;
             }
             rectangle(draw, traffic_signs[i].rect.tl(), traffic_signs[i].rect.br(), CV_RGB(255,0,255), 1, 8, 0);
         }
     }
 
     if (debug_flag) {
-        // for(size_t i=0; i<record.prev_rects.size(); i++){
-        //     if(record.prev_rects[i].id == 0){
-        //         rectangle(img, traffic_signs[i].rect.tl(), traffic_signs[i].rect.br(), CV_RGB(255,0,0), 1, 8, 0);
-        //     } else if(record.prev_rects[i].id == 1){
-        //         rectangle(img, traffic_signs[i].rect.tl(), traffic_signs[i].rect.br(), CV_RGB(0,255,0), 1, 8, 0);
-        //     } else if(record.prev_rects[i].id == 2){
-        //         // rectangle(img, traffic_signs[i].rect.tl(), traffic_signs[i].rect.br(), CV_RGB(0,0,255), 1, 8, 0);
-        //         std::cout << "2 : " << std::endl;
-        //     } else {
-        //         std::cout << "something wrong" << std::endl;
-        //     }
-        // }
-        // for(size_t i=0; i<traffic_signs.size(); i++){
-        //     if(traffic_signs[i].id != 0){
-        //         int x = traffic_signs[i].rect.tl().x;
-        //         int y = traffic_signs[i].rect.tl().y;
-        //         std::string text = traffic_signs[i].id == 1? "turn_left":"turn_right";
-        //         putText(img, text, cv::Point(x, y), cv::FONT_HERSHEY_PLAIN, 1.0, CV_RGB(255,0,255), 2.0);
-        //         std::cout << text << " at [" << x << ", " << y << "] with area " << traffic_signs[i].rect.area() << std::endl;
-        //     }
-        //     rectangle(img, traffic_signs[i].rect.tl(), traffic_signs[i].rect.br(), CV_RGB(255,0,255), 1, 8, 0);
-        // }
-        // imshow("traffic sign detection", img);
-        // cv::waitKey(1);
+        for(size_t i=0; i<record.prev_rects.size(); i++){
+            if(record.prev_rects[i].id == 0){
+                rectangle(img, record.prev_rects[i].rect.tl(), record.prev_rects[i].rect.br(), CV_RGB(255,0,0), 1, 8, 0);
+            } else if(record.prev_rects[i].id == 1){
+                rectangle(img, record.prev_rects[i].rect.tl(), record.prev_rects[i].rect.br(), CV_RGB(0,255,0), 1, 8, 0);
+            } else {
+                rectangle(img, record.prev_rects[i].rect.tl(), record.prev_rects[i].rect.br(), CV_RGB(0,0,255), 1, 8, 0);
+            }
+        }
         publishImage(debug_img_publisher, img);
-        
     }
 }
 

@@ -119,9 +119,6 @@ class TrafficSignDetector: ImagePublisher {
         // Delete expired rects and add new current rects
         void updatePrevRect();
 
-        // Only return high probability right result
-        void filterByHist();
-
         // Detect and classify traffic sign
         void recognize(const cv::Mat & input, std::vector<TrafficSign> &traffic_signs);
         void recognize(const cv::Mat & input, std::vector<TrafficSign> &traffic_signs, cv::Mat & draw, bool draw_result = true);
