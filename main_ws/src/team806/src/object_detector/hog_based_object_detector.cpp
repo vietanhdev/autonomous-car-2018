@@ -30,7 +30,7 @@ HogBasedObjectDetector::HogBasedObjectDetector(
 // Detect the objects
 // Return the number of objects in the input image
 int HogBasedObjectDetector::detect(
-    const cv::Mat &img, std::vector<DetectedObject> &detected_objects) {
+    const cv::Mat &img, std::vector<DetectedObject> &detected_objects, bool debug) {
 
     // Clear result vector
     detected_objects.clear();

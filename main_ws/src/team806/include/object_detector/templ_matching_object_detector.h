@@ -32,11 +32,11 @@ class TemplMatchingObjectDetector : public ObjectDetector {
     // Detect the objects
     // Return the number of objects in the input image
     int detect(const cv::Mat &img,
-           std::vector<DetectedObject> &detected_objects);
+           std::vector<DetectedObject> &detected_objects, bool debug = false);
 
     // Matching object using template matching
     bool matching(const cv::Mat &img, const cv::Mat &templ,
-                  std::vector<cv::Rect> &rects);
+                  std::vector<cv::Rect> &rects, bool debug = false);
 
     // Get file extension from filepath/filename
     static std::string getFileExt(const std::string &s);

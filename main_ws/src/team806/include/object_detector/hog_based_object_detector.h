@@ -35,7 +35,7 @@ class HogBasedObjectDetector : public ObjectDetector {
     // Detect the objects
     // Return the number of objects in the input image
     int detect(const cv::Mat &img,
-           std::vector<DetectedObject> &detected_objects);
+           std::vector<DetectedObject> &detected_objects, bool debug = false);
 
 
 };

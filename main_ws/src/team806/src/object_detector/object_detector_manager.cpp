@@ -1,6 +1,10 @@
 #include "object_detector_manager.h"
 
 ObjectDetectorManager::ObjectDetectorManager() {
+
+    config = Config::getDefaultConfigInstance();
+    debug_flag = config->get<bool>("debug_object_detector");
+
     // Init detectors
     // detectors.push_back(
     //     dynamic_cast<ObjectDetector *>(new HogBasedObjectDetector(
@@ -26,7 +30,7 @@ ObjectDetectorManager::ObjectDetectorManager() {
             ros::package::getPath(config->getROSPackage()) +
                 "/data/object_templates/2",
             0.8)));
-     detectors.push_back(
+    detectors.push_back(
         dynamic_cast<ObjectDetector *>(new TemplMatchingObjectDetector(
             DetectedObject::ObjectLabel::OBJECT_3,
             ros::package::getPath(config->getROSPackage()) +
@@ -60,13 +64,6 @@ void ObjectDetectorManager::filterNewDetectedObjects(
 
             // If the object is an old object
             // Check the area of intersect over area of union
-
-            std::cout << "Check area: " << static_cast<double>(
-                    (new_detected_objects[i].rect & detected_objects[j].rect)
-                        .area()) /
-                        (new_detected_objects[i].rect |
-                         detected_objects[j].rect)
-                            .area() << std::endl;
 
             if (
                 (   static_cast<double>((new_detected_objects[i].rect & detected_objects[j].rect) .area()) 
@@ -123,8 +120,10 @@ void ObjectDetectorManager::filterNewDetectedObjects(
     output_list.clear();
     for (size_t i = 0; i < detected_objects.size(); ++i) {
 
-        std::cout << i << " : " << std::bitset<32>(detected_objects[i].hit_history) << std::endl;
-
+        if (debug_flag) {
+            std::cout << i << " : " << std::bitset<32>(detected_objects[i].hit_history) << std::endl;
+        }
+        
         // If we detect 3/5 last frame, we trust the result
         if (countNonZeroBits(detected_objects[i].hit_history, 5) >= 3) {
             output_list.push_back(detected_objects[i]);
@@ -152,7 +151,7 @@ int ObjectDetectorManager::detect(
         for (size_t i = 0; i < num_of_detectors_each_global_search; ++i) {
             std::vector<DetectedObject> objects;
 
-            detectors[getDetectorIter()]->detect(img, objects);
+            detectors[getDetectorIter()]->detect(img, objects, debug_flag);
 
             // Concat results into global results
             new_detected_objects.insert(

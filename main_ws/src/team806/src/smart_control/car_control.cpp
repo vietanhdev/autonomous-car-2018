@@ -96,9 +96,12 @@ void CarControl::publishSignal(float speed_data, float angle_data) {
 
         // Control quick start: Overwrite speed on quick start
         if (quick_start && Timer::calcTimePassed(round_start_time) < quick_start_time) {
-            std::cout << "Time passed: " << Timer::calcTimePassed(round_start_time) << std::endl;
+
+            if (debug_flag)
+                std::cout << "Quick Starting at: " << Timer::calcTimePassed(round_start_time) << std::endl;
+
             speed.data = quick_start_speed;
-            std::cout << "Quick Start" << std::endl;
+            
         }
 
 
@@ -184,12 +187,12 @@ void CarControl::driverCar(Road & road, const std::vector<TrafficSign> & traffic
     //  STEP 4: ADJUST CONTROLLING PARAMS USING TRAFFIC SIGN DETECTOR
     if (!traffic_signs.empty() && !is_turning) {
 
-        if (debug_flag) ROS_INFO_STREAM("TRAFFIC SIGN DETECTED!: " << "Number: " << traffic_signs.size());
-
-        for (int i = 0; i < traffic_signs.size(); ++i) {
-            std::cout << traffic_signs[i].id << " : " << traffic_signs[i].rect << std::endl;
+        if (debug_flag) {
+            ROS_INFO_STREAM("TRAFFIC SIGN DETECTED!: " << "Number: " << traffic_signs.size());
+            for (int i = 0; i < traffic_signs.size(); ++i) {
+                std::cout << traffic_signs[i].id << " : " << traffic_signs[i].rect << std::endl;
+            }
         }
-
 
         if (traffic_signs[0].rect.area() > min_traffic_sign_bound_area
             && (

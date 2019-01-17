@@ -8,8 +8,6 @@ TemplMatchingObjectDetector::TemplMatchingObjectDetector(DetectedObject::ObjectL
     this->label = label;
     this->threshold = threshold;
 
-    std::cout << "Obstacle Folder: " << std::endl;
-
     // List all image files in objects folder => read images into obstacle
     // database Currently only support jpg, png and bmp
     std::vector<std::string> obstacle_files;
@@ -30,7 +28,7 @@ TemplMatchingObjectDetector::TemplMatchingObjectDetector(DetectedObject::ObjectL
                                file_ext.begin(), ::tolower);
                 if (file_ext == "jpg" || file_ext == "png" ||
                     file_ext == "bmp") {
-                    std::cout << "Loading Object Template: " << file_path << std::endl;
+                    // std::cout << "Loading Object Template: " << file_path << std::endl;
 
                     cv::Mat templ = cv::imread(file_path, 1);
                     if (templ.empty()) {
@@ -58,7 +56,7 @@ TemplMatchingObjectDetector::TemplMatchingObjectDetector(DetectedObject::ObjectL
 // Detect the objects
 // Return the number of objects in the input image
 int TemplMatchingObjectDetector::detect(const cv::Mat &img,
-        std::vector<DetectedObject> &detected_objects) {
+        std::vector<DetectedObject> &detected_objects, bool debug) {
 
     std::vector<cv::Rect> new_objects;
 
@@ -68,7 +66,7 @@ int TemplMatchingObjectDetector::detect(const cv::Mat &img,
         std::vector<cv::Rect> found_objects;
 
         // Do template matching for object
-        if (matching(img, obstacle_templ, found_objects)) {
+        if (matching(img, obstacle_templ, found_objects, debug)) {
             new_objects.insert(new_objects.end(),
                                std::make_move_iterator(found_objects.begin()),
                                std::make_move_iterator(found_objects.end()));
@@ -86,7 +84,7 @@ int TemplMatchingObjectDetector::detect(const cv::Mat &img,
 
 
 // Matching object using template matching
-bool TemplMatchingObjectDetector::matching(const Mat &img, const Mat &templ, std::vector<cv::Rect> &rects) {
+bool TemplMatchingObjectDetector::matching(const Mat &img, const Mat &templ, std::vector<cv::Rect> &rects, bool debug) {
     // Clear the result
     rects.clear();
 
@@ -121,7 +119,11 @@ bool TemplMatchingObjectDetector::matching(const Mat &img, const Mat &templ, std
 
     /// Show me what you got
     if (maxVal > threshold) {
-        cout << "OBJECT TEMPLATE MATCHED" << endl;
+
+        if (debug) {
+            cout << "OBJECT TEMPLATE MATCHED" << endl;
+        }
+        
         rects.push_back(cv::Rect(
             matchLoc, Point(matchLoc.x + templ.cols, matchLoc.y + templ.rows)));
         return true;

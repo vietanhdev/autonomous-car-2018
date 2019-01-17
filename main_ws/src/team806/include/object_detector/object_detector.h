@@ -25,7 +25,7 @@ class ObjectDetector : ImagePublisher {
     // Detect the objects
     // Return the number of objects in the input image
     virtual int detect(const cv::Mat &img,
-           std::vector<DetectedObject> &detected_objects) = 0;
+           std::vector<DetectedObject> &detected_objects, bool debug) = 0;
 
 
 };
