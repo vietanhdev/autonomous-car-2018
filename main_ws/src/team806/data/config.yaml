@@ -9,7 +9,7 @@ image_size: "320 240"
 debug_obstacle_detector: false
 debug_lane_detector: false
 debug_car_control: false
-debug_sign_detector: false
+debug_sign_detector: true
 debug_show_fps: false
 
 # ==== Obstacle detector ====

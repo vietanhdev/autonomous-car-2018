@@ -38,8 +38,8 @@ TrafficSignDetector::TrafficSignDetector(){
 
     // Number of labeled bouding rects in previous frames is stored in 'record'
     // If there are enough similarity labeled bouding rects in 'record', we can label the current rects as them
-    num_prev_check = config_trafficsign->get<int>("num_prev_check");
-    num_certainty = config_trafficsign->get<int>("num_certainty");
+    min_prev_check = config_trafficsign->get<int>("min_prev_check");
+    min_prob = config_trafficsign->get<float>("min_prob");
 
     // Init HOG Descriptor config
     hog = cv::HOGDescriptor(
@@ -259,34 +259,71 @@ bool TrafficSignDetector::checkSimilarityRect(cv::Rect A, cv::Rect B){
 	return false;
 }
 
-void TrafficSignDetector::classifyRect(){
+void TrafficSignDetector::classifyCurrRect(){
 
 	for(int i=0; i<record.curr_rects.size(); i++){
 
-		int classified = false;
-		int count = 0;
-
-		for(size_t j=0; j<record.prev_rects.size(); j++){
-			if(checkSimilarityRect(record.curr_rects[i].rect, record.prev_rects[j].rect) ==  true){
-				// found the similar classified rect in prev_rects, we classify curr rect base on prev label
-				count++;
-				if(count >= num_certainty){
-					record.curr_rects[i].id = record.prev_rects[j].id;
-					classified = true;
-					break;
-				}
-			}
-		}
-
-		if(classified == false){
-			// the curr_rects is not appear in prev_rects, so we have to use classifySVM
-			cv::Mat roi_img = img(record.curr_rects[i].rect);
-			resize(roi_img, roi_img, cv::Size(size, size));
-			int id = classifySVM(hog, model, roi_img);
-			record.curr_rects[i].id = id;
-		}
-
+        // we use classifySVM
+        cv::Mat roi_img = img(record.curr_rects[i].rect);
+        resize(roi_img, roi_img, cv::Size(size, size));
+        int id = classifySVM(hog, model, roi_img);
+        record.curr_rects[i].id = id;
+        
 	}
+}
+
+void TrafficSignDetector::updatePrevRect(){
+    auto it = std::begin(record.prev_rects);
+
+    // delete expired rects
+    while (it != std::end(record.prev_rects)) {
+        long time_pass = Timer::calcTimePassed( (*it).observe_time );
+        if ( time_pass > 3000 ) {
+            it = record.prev_rects.erase(it);
+        } else {
+            ++it;
+        }
+    }
+
+    // add new classified rects
+    for(size_t i=0; i<record.curr_rects.size(); i++){
+		record.prev_rects.push_back(record.curr_rects[i]);
+	}
+
+}
+
+void TrafficSignDetector::filterByHist(){
+
+    auto it = std::begin(record.curr_rects);
+
+    // delete low probability rects
+    while(it != std::end(record.curr_rects)) {
+        int total = 0;
+        int same_result = 0;
+        
+        TrafficSign curr = *it;
+        
+        for(size_t j=0; j<record.prev_rects.size(); j++){
+            TrafficSign prev = record.prev_rects[j];
+            if( checkSimilarityRect(curr.rect, prev.rect) ) {
+                total++;
+                if(curr.id == prev.id){
+                    same_result++;
+                }
+            }
+        }
+
+        std::cout << "same result " << same_result << " and total " << total << std::endl;
+        // float min_right = (float)total * min_prob;
+        // std::cout << "min right " << min_right << std::endl;
+
+        // if(total >= min_prev_check && same_result >= min_right){
+        //     ++it;
+        // } else {
+        //     it = record.curr_rects.erase(it);
+        // }
+    }
+
 }
 
 void TrafficSignDetector::recognize(const cv::Mat & input, std::vector<TrafficSign> &traffic_signs, cv::Mat & draw, bool draw_result){
@@ -327,20 +364,35 @@ void TrafficSignDetector::recognize(const cv::Mat & input, std::vector<TrafficSi
     	}
     }
 
-	classifyRect();
-
-	if(record.count_rects.size() >= num_prev_check){
-		record.prev_rects.erase(record.prev_rects.begin(), record.prev_rects.begin() + record.count_rects[0]);
-		record.count_rects.erase(record.count_rects.begin());
-	}
-
-	for(int i=0; i<record.curr_rects.size(); i++){
-		record.prev_rects.push_back(record.curr_rects[i]);
-	}
-	record.count_rects.push_back(record.curr_rects.size());
+	classifyCurrRect();
+    // filterByHist();
 
     // Return value to traffic_signs
-    traffic_signs = record.curr_rects;
+    traffic_signs.clear();
+    for(size_t i=0; i<record.curr_rects.size(); i++) {
+        int total, same_id;
+        TrafficSign curr = record.curr_rects[i];
+        
+        for(size_t j=0; j<record.prev_rects.size(); j++){
+            TrafficSign prev = record.prev_rects[j];
+            if( checkSimilarityRect(curr.rect, prev.rect) ) {
+                total++;
+                if(curr.id == prev.id){
+                    same_id++;
+                }
+            }
+        }
+
+        std::cout << "same result " << same_id<< " and total " << total << std::endl;
+        int min_right = (int) (total * min_prob + 1);
+        std::cout << "min right " << min_right << std::endl;
+
+        if(total >= min_prev_check && same_id >= min_right) {
+            traffic_signs.push_back(curr);
+        }
+    }
+
+    updatePrevRect();
 
     if(draw_result){
         for(size_t i=0; i<traffic_signs.size(); i++){
@@ -356,16 +408,28 @@ void TrafficSignDetector::recognize(const cv::Mat & input, std::vector<TrafficSi
     }
 
     if (debug_flag) {
-        for(size_t i=0; i<traffic_signs.size(); i++){
-            if(traffic_signs[i].id != 0){
-                int x = traffic_signs[i].rect.tl().x;
-                int y = traffic_signs[i].rect.tl().y;
-                std::string text = traffic_signs[i].id == 1? "turn_left":"turn_right";
-                putText(img, text, cv::Point(x, y), cv::FONT_HERSHEY_PLAIN, 1.0, CV_RGB(255,0,255), 2.0);
-                std::cout << text << " at [" << x << ", " << y << "] with area " << traffic_signs[i].rect.area() << std::endl;
-            }
-            rectangle(img, traffic_signs[i].rect.tl(), traffic_signs[i].rect.br(), CV_RGB(255,0,255), 1, 8, 0);
-        }
+        // for(size_t i=0; i<record.prev_rects.size(); i++){
+        //     if(record.prev_rects[i].id == 0){
+        //         rectangle(img, traffic_signs[i].rect.tl(), traffic_signs[i].rect.br(), CV_RGB(255,0,0), 1, 8, 0);
+        //     } else if(record.prev_rects[i].id == 1){
+        //         rectangle(img, traffic_signs[i].rect.tl(), traffic_signs[i].rect.br(), CV_RGB(0,255,0), 1, 8, 0);
+        //     } else if(record.prev_rects[i].id == 2){
+        //         // rectangle(img, traffic_signs[i].rect.tl(), traffic_signs[i].rect.br(), CV_RGB(0,0,255), 1, 8, 0);
+        //         std::cout << "2 : " << std::endl;
+        //     } else {
+        //         std::cout << "something wrong" << std::endl;
+        //     }
+        // }
+        // for(size_t i=0; i<traffic_signs.size(); i++){
+        //     if(traffic_signs[i].id != 0){
+        //         int x = traffic_signs[i].rect.tl().x;
+        //         int y = traffic_signs[i].rect.tl().y;
+        //         std::string text = traffic_signs[i].id == 1? "turn_left":"turn_right";
+        //         putText(img, text, cv::Point(x, y), cv::FONT_HERSHEY_PLAIN, 1.0, CV_RGB(255,0,255), 2.0);
+        //         std::cout << text << " at [" << x << ", " << y << "] with area " << traffic_signs[i].rect.area() << std::endl;
+        //     }
+        //     rectangle(img, traffic_signs[i].rect.tl(), traffic_signs[i].rect.br(), CV_RGB(255,0,255), 1, 8, 0);
+        // }
         // imshow("traffic sign detection", img);
         // cv::waitKey(1);
         publishImage(debug_img_publisher, img);
