@@ -6,18 +6,18 @@ ObjectDetectorManager::ObjectDetectorManager() {
     debug_flag = config->get<bool>("debug_object_detector");
 
     // Init detectors
-    // detectors.push_back(
-    //     dynamic_cast<ObjectDetector *>(new HogBasedObjectDetector(
-    //         DetectedObject::ObjectLabel::OBJECT_1,
-    //         ros::package::getPath(config->getROSPackage()) +
-    //             "/data/object_hog_files/object1.yml",
-    //         2.1)));
     detectors.push_back(
         dynamic_cast<ObjectDetector *>(new HogBasedObjectDetector(
             DetectedObject::ObjectLabel::OBJECT_1,
             ros::package::getPath(config->getROSPackage()) +
-                "/data/object_hog_files/object1_an.yml",
-            0.8)));
+                "/data/object_hog_files/object1_v2.yml",
+            0.7)));
+    detectors.push_back(
+        dynamic_cast<ObjectDetector *>(new HogBasedObjectDetector(
+            DetectedObject::ObjectLabel::OBJECT_2,
+            ros::package::getPath(config->getROSPackage()) +
+                "/data/object_hog_files/object2_v1.yml",
+            0.5)));
     detectors.push_back(
         dynamic_cast<ObjectDetector *>(new TemplMatchingObjectDetector(
             DetectedObject::ObjectLabel::OBJECT_1,

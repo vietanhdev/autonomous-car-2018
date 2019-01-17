@@ -21,13 +21,13 @@
 
 class ObjectDetectorManager : ImagePublisher {
    public:
-    bool debug_flag = false;
+    bool debug_flag = true;
     image_transport::Publisher debug_img_publisher;
     std::shared_ptr<Config> config;
 
     std::vector <ObjectDetector*> detectors;
     size_t detector_iter = 0;
-    size_t num_of_detectors_each_global_search = 5;
+    size_t num_of_detectors_each_global_search = 3;
     size_t num_of_frames_bw_global_searchs = 0;
     size_t num_of_frames_to_global_search = 0;
 

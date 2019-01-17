@@ -6,7 +6,7 @@ max_angle: 50
 image_size: "320 240"
 
 # ==== debug_flag ====
-debug_object_detector: false
+debug_object_detector: true
 debug_lane_detector: false
 debug_car_control: false
 debug_sign_detector: true
