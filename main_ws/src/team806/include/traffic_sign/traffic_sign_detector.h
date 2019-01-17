@@ -18,7 +18,6 @@
 typedef struct RecordStructure {
 	std::vector<TrafficSign> prev_rects;
 	std::vector<TrafficSign> curr_rects;
-	std::vector<int> count_rects;
 } Record;
 
 class TrafficSignDetector: ImagePublisher {
@@ -45,8 +44,8 @@ class TrafficSignDetector: ImagePublisher {
         int size;
         float eps_diff;
 
-        int num_prev_check;
-        int num_certainty;
+        int min_prev_check;
+        float min_prob;
 
         float min_area_contour, max_area_contour;
 
@@ -115,7 +114,13 @@ class TrafficSignDetector: ImagePublisher {
         bool checkSimilarityRect(cv::Rect A, cv::Rect B);
 
         // Classify rect with training model
-        void classifyRect();
+        void classifyCurrRect();
+
+        // Delete expired rects and add new current rects
+        void updatePrevRect();
+
+        // Only return high probability right result
+        void filterByHist();
 
         // Detect and classify traffic sign
         void recognize(const cv::Mat & input, std::vector<TrafficSign> &traffic_signs);

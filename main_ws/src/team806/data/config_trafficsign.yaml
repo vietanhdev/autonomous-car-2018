@@ -5,7 +5,7 @@ low_HSV: "90 110 110"
 high_HSV: "104 255 255"
 
 crop_size: 32
-eps_diff: 0.001
+eps_diff: 1.5
 
 # For filtering contours with area
 min_area_contour: 10.0
@@ -19,5 +19,5 @@ max_accepted_ratio: 1.5
 
 # Number of labeled bouding rects in previous frames is stored in 'record'
 # If there are enough similarity labeled bouding rects in 'record', we can label the current rects as them
-num_prev_check: 1
-num_certainty: 1
+min_prev_check: 5
+min_prob: 0.5
