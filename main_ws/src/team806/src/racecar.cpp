@@ -28,6 +28,8 @@ using namespace cv::ximgproc::segmentation;
 // This flag turn to true on the first time receiving image from simulator
 bool racing = false;
 
+bool draw_road_area = false;
+
 bool use_traffic_sign_detector_2 = false;
 bool debug_show_fps = false;
 
@@ -38,10 +40,6 @@ std::shared_ptr<TrafficSignDetector2> sign_detector_2;
 std::shared_ptr<ObjectDetectorManager> object_detector_manager;
 
 std::shared_ptr<ImagePublisher> img_publisher;
-image_transport::Publisher experiment_img_pub;
-image_transport::Publisher experiment_img_pub_canny;
-image_transport::Publisher experiment_img_pub_meanshift;
-
 // ============ Current State ==================
 
 std::mutex current_img_mutex;
@@ -94,6 +92,14 @@ void drawResultRound1() {
         if (draw.empty()) {
             Timer::delay(500);
             continue;
+        }
+
+        // Draw the road
+        if (draw_road_area) {
+            std::lock_guard<std::mutex> guard(road_mutex);
+            cv::Mat red = Mat(draw.size(), draw.type(), Scalar(0,0,255));
+
+            cv::bitwise_and(red, draw, draw, road.lane_mask);
         }
 
         // Draw the lane center
@@ -351,14 +357,9 @@ int main(int argc, char **argv) {
 
 
     img_publisher = std::make_shared<ImagePublisher>();
-    experiment_img_pub =
-        img_publisher->createImagePublisher("experiment_img", 1);
-    experiment_img_pub_canny =
-        img_publisher->createImagePublisher("experiment_img/canny", 1);
-    experiment_img_pub_meanshift =
-        img_publisher->createImagePublisher("experiment_img/meanshift", 1);
 
     debug_show_fps = config->get<bool>("debug_show_fps");
+    draw_road_area = config->get<bool>("draw_road_area");
 
     lane_detector = std::shared_ptr<LaneDetector>(new LaneDetector());
 
