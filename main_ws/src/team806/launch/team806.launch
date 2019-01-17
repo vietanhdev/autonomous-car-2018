@@ -15,9 +15,9 @@ limitations under the License.
 
 <launch>
 
-  <!-- <include ns="bridge06" file="$(find rosbridge_server)/launch/rosbridge_websocket.launch">
+  <include ns="bridge06" file="$(find rosbridge_server)/launch/rosbridge_websocket.launch">
     <arg name="port" value="9001" />
-  </include> -->
+  </include>
 
   <node name="team806" pkg="team806" type="team806_node" output="screen">
     <param name="image_transport" value="compressed" />
