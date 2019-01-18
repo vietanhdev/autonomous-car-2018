@@ -5,37 +5,43 @@ ObjectDetectorManager::ObjectDetectorManager() {
     config = Config::getDefaultConfigInstance();
     debug_flag = config->get<bool>("debug_object_detector");
 
-    // Init detectors
-    detectors.push_back(
-        dynamic_cast<ObjectDetector *>(new HogBasedObjectDetector(
-            DetectedObject::ObjectLabel::OBJECT_1,
-            ros::package::getPath(config->getROSPackage()) +
-                "/data/object_hog_files/object1_v2.yml",
-            0.5)));
-    detectors.push_back(
-        dynamic_cast<ObjectDetector *>(new HogBasedObjectDetector(
-            DetectedObject::ObjectLabel::OBJECT_2,
-            ros::package::getPath(config->getROSPackage()) +
-                "/data/object_hog_files/object2_v1.yml",
-            0.5)));
+    // // Init detectors
     // detectors.push_back(
-    //     dynamic_cast<ObjectDetector *>(new TemplMatchingObjectDetector(
+    //     dynamic_cast<ObjectDetector *>(new HogBasedObjectDetector(
     //         DetectedObject::ObjectLabel::OBJECT_1,
     //         ros::package::getPath(config->getROSPackage()) +
-    //             "/data/object_templates/1",
-    //         0.8)));
+    //             "/data/object_hog_files/object1_v3.yml",
+    //         0.5)));
     // detectors.push_back(
-    //     dynamic_cast<ObjectDetector *>(new TemplMatchingObjectDetector(
+    //     dynamic_cast<ObjectDetector *>(new HogBasedObjectDetector(
     //         DetectedObject::ObjectLabel::OBJECT_2,
     //         ros::package::getPath(config->getROSPackage()) +
-    //             "/data/object_templates/2",
-    //         0.8)));
+    //             "/data/object_hog_files/object2_v2.yml",
+    //         0.5)));
     // detectors.push_back(
-    //     dynamic_cast<ObjectDetector *>(new TemplMatchingObjectDetector(
+    //     dynamic_cast<ObjectDetector *>(new HogBasedObjectDetector(
     //         DetectedObject::ObjectLabel::OBJECT_3,
     //         ros::package::getPath(config->getROSPackage()) +
-    //             "/data/object_templates/3",
-    //         0.8)));
+    //             "/data/object_hog_files/object3_v1.yml",
+    //         0.5)));
+    detectors.push_back(
+        dynamic_cast<ObjectDetector *>(new TemplMatchingObjectDetector(
+            DetectedObject::ObjectLabel::OBJECT_1,
+            ros::package::getPath(config->getROSPackage()) +
+                "/data/object_templates/1",
+            0.8)));
+    detectors.push_back(
+        dynamic_cast<ObjectDetector *>(new TemplMatchingObjectDetector(
+            DetectedObject::ObjectLabel::OBJECT_2,
+            ros::package::getPath(config->getROSPackage()) +
+                "/data/object_templates/2",
+            0.8)));
+    detectors.push_back(
+        dynamic_cast<ObjectDetector *>(new TemplMatchingObjectDetector(
+            DetectedObject::ObjectLabel::OBJECT_3,
+            ros::package::getPath(config->getROSPackage()) +
+                "/data/object_templates/3",
+            0.8)));
 }
 
 // Filter new detected object.

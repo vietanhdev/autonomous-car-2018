@@ -50,6 +50,8 @@
         "numeric": "cpp",
         "thread": "cpp",
         "cinttypes": "cpp",
-        "algorithm": "cpp"
+        "algorithm": "cpp",
+        "strstream": "cpp",
+        "typeindex": "cpp"
     }
 }
