@@ -11,31 +11,31 @@ ObjectDetectorManager::ObjectDetectorManager() {
             DetectedObject::ObjectLabel::OBJECT_1,
             ros::package::getPath(config->getROSPackage()) +
                 "/data/object_hog_files/object1_v2.yml",
-            0.7)));
+            0.5)));
     detectors.push_back(
         dynamic_cast<ObjectDetector *>(new HogBasedObjectDetector(
             DetectedObject::ObjectLabel::OBJECT_2,
             ros::package::getPath(config->getROSPackage()) +
                 "/data/object_hog_files/object2_v1.yml",
             0.5)));
-    detectors.push_back(
-        dynamic_cast<ObjectDetector *>(new TemplMatchingObjectDetector(
-            DetectedObject::ObjectLabel::OBJECT_1,
-            ros::package::getPath(config->getROSPackage()) +
-                "/data/object_templates/1",
-            0.8)));
-    detectors.push_back(
-        dynamic_cast<ObjectDetector *>(new TemplMatchingObjectDetector(
-            DetectedObject::ObjectLabel::OBJECT_2,
-            ros::package::getPath(config->getROSPackage()) +
-                "/data/object_templates/2",
-            0.8)));
-    detectors.push_back(
-        dynamic_cast<ObjectDetector *>(new TemplMatchingObjectDetector(
-            DetectedObject::ObjectLabel::OBJECT_3,
-            ros::package::getPath(config->getROSPackage()) +
-                "/data/object_templates/3",
-            0.8)));
+    // detectors.push_back(
+    //     dynamic_cast<ObjectDetector *>(new TemplMatchingObjectDetector(
+    //         DetectedObject::ObjectLabel::OBJECT_1,
+    //         ros::package::getPath(config->getROSPackage()) +
+    //             "/data/object_templates/1",
+    //         0.8)));
+    // detectors.push_back(
+    //     dynamic_cast<ObjectDetector *>(new TemplMatchingObjectDetector(
+    //         DetectedObject::ObjectLabel::OBJECT_2,
+    //         ros::package::getPath(config->getROSPackage()) +
+    //             "/data/object_templates/2",
+    //         0.8)));
+    // detectors.push_back(
+    //     dynamic_cast<ObjectDetector *>(new TemplMatchingObjectDetector(
+    //         DetectedObject::ObjectLabel::OBJECT_3,
+    //         ros::package::getPath(config->getROSPackage()) +
+    //             "/data/object_templates/3",
+    //         0.8)));
 }
 
 // Filter new detected object.
@@ -125,7 +125,7 @@ void ObjectDetectorManager::filterNewDetectedObjects(
         }
         
         // If we detect 3/5 last frame, we trust the result
-        if (countNonZeroBits(detected_objects[i].hit_history, 5) >= 3) {
+        if (countNonZeroBits(detected_objects[i].hit_history, 5) >= 0) {
             output_list.push_back(detected_objects[i]);
         }
     }

@@ -41,18 +41,20 @@ int HogBasedObjectDetector::detect(
     std::vector<double> weights;
 
 
-    //hog.detectMultiScale(img, foundLocations, weights, this->threshold, this->winstride);
+    hog.detectMultiScale(img, foundLocations, weights, this->threshold, this->winstride);
+
+    std::cout << "detected" << std::endl;
 
     // Only detect in an interested area
     int height_of_no_interested = 80;
     cv::Rect interested_roi(0, height_of_no_interested, img.cols, img.rows - height_of_no_interested);
     cv::Mat window = img(interested_roi);
 
-    //Detect "Not MultiScale"
-    hog.detect(window, foundPoints, weights, this->threshold, this->winstride);
-    for (int i = 0; i < foundPoints.size(); ++i) {
-        foundLocations.push_back(cv::Rect(foundPoints[i].x, foundPoints[i].y + height_of_no_interested, 32, 32));
-    }
+    // //Detect "Not MultiScale"
+    // hog.detect(window, foundPoints, weights, this->threshold, this->winstride);
+    // for (int i = 0; i < foundPoints.size(); ++i) {
+    //     foundLocations.push_back(cv::Rect(foundPoints[i].x, foundPoints[i].y + height_of_no_interested, 32, 32));
+    // }
 
     if (!foundLocations.empty()) {
         for (int i = 0; i < foundLocations.size(); ++i) {

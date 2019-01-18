@@ -11,7 +11,7 @@ find_package(catkin REQUIRED COMPONENTS
 )
 
 set(OpenCV_STATIC OFF)
-find_package(  OpenCV REQUIRED )
+find_package(  OpenCV 3.4.3 REQUIRED )
 include_directories(${OpenCV_INCLUDE_DIRS})
 
 catkin_package(
@@ -64,6 +64,8 @@ target_link_libraries(
   ${Boost_LIBRARIES}
 )
 
+
+message(${catkin_LIBRARIES})
 
 install(TARGETS ${ADDITIONAL_EXECUTABLES}
    ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
