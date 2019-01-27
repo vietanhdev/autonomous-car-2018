@@ -1,5 +1,13 @@
 # ICT60 RACECAR - TEAM806
 
+## DEMO
+[![Road segmentation and Traffic sign detection](screenshots/screenshot1.png)](https://www.youtube.com/watch?v=Obv53r7UV34&feature=youtu.be)
+
+## ALGORITHMS
+- For road segmentation, we use mainly floodfill and watershed algorithm. As you can see in the video, these algorithms do well in road segmentation and also noise removal.
+
+- For traffic sign detection, we detect the interested area using color segmentation (HSV color space) and then pass the result into a SVM (Support Vector Machine) classfier with HOG (Histogram of oriented gradients) features.
+
 ## ENVIRONMENT REQUIREMENT
 
 - UBUNTU 18.04 / 16.04
