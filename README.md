@@ -11,7 +11,7 @@
 ## ENVIRONMENT REQUIREMENT
 
 - UBUNTU 18.04 / 16.04
-- OPENCV 3.4.3: https://www.learncv.com/vi/cai-dat-opencv-tren-ubuntu-18-04/
+- OPENCV 3.4.3: https://aicurious.io/posts/2018-09-14-cai-dat-opencv-tren-ubuntu-18-04/
 - NPM: https://www.npmjs.com/
 - ROS:
     + For Ubuntu 18.04: ROS Melodic Morenia: http://wiki.ros.org/melodic/Installation/Ubuntu
